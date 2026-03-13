@@ -16,10 +16,10 @@ class Position(Base):
     stock_code = Column(String(20), unique=True, nullable=False, index=True)
     stock_name = Column(String(50))
     quantity = Column(Integer, default=0)
-    avg_cost = Column(Float, default=0.0)
+    avg_cost = Column(Float, default=0.0)  # 支持负数（负成本）
     current_price = Column(Float, default=0.0)
     profit_loss = Column(Float, default=0.0)       # 浮动盈亏（未实现）
-    profit_rate = Column(Float, default=0.0)       # 盈亏率
+    profit_rate = Column(Float, nullable=True, default=0.0)  # 盈亏率（负成本时为 NULL）
     realized_profit = Column(Float, default=0.0)   # 已实现盈亏
     total_cost = Column(Float, default=0.0)        # 累计投入成本（含手续费）
     created_at = Column(DateTime, default=datetime.now)

@@ -363,8 +363,13 @@ def cmd_monitor(args):
 
             # 更新当前价
             p.current_price = price
-            p.profit_loss = (price - p.avg_cost) * p.quantity
-            p.profit_rate = ((price - p.avg_cost) / p.avg_cost * 100) if p.avg_cost > 0 else 0
+            # 负成本盈亏计算
+            if p.avg_cost < 0:
+                p.profit_loss = (abs(p.avg_cost) + price) * p.quantity
+                p.profit_rate = None  # 负成本时盈亏率无意义
+            else:
+                p.profit_loss = (price - p.avg_cost) * p.quantity
+                p.profit_rate = ((price - p.avg_cost) / p.avg_cost * 100) if p.avg_cost > 0 else 0
 
             # 计算技术指标
             indicators = calculate_technical_indicators(stock_query, code)

@@ -191,24 +191,24 @@ class MyStocks:
     def initialize_position(
         self,
         stock_code: str,
-        stock_name: str,
         quantity: int,
         avg_cost: float,
-        current_price: float,
+        current_price: float = None,
+        stock_name: str = None,
         total_cost: float = None,
         purchase_date: str = None,
         mode: str = "overwrite",
         notes: str = None
     ) -> Position:
         """
-        初始化单只持仓
+        初始化持仓（用于首次导入已有持仓）
 
         Args:
-            stock_code: 股票代码
-            stock_name: 股票名称
-            quantity: 持仓数量
-            avg_cost: 成本价
-            current_price: 当前价
+            stock_code: 股票代码（必需）
+            quantity: 持仓数量（必需）
+            avg_cost: 成本价，可为负数，精度为 4 位小数（必需）
+            current_price: 当前价，为 None 时自动从 API 获取（可选）
+            stock_name: 股票名称，为 None 时自动从 API 获取（可选）
             total_cost: 总成本（可选）
             purchase_date: 建仓日期（可选，格式：YYYY-MM-DD）
             mode: 模式（overwrite=覆盖，add=累加）
@@ -216,14 +216,19 @@ class MyStocks:
 
         Returns:
             创建的持仓对象
+
+        股票信息获取逻辑：
+            - 当 current_price 或 stock_name 为 None 时
+            - 调用 UnifiedStockQueryService.get_quote(stock_code) 获取
+            - 数据源优先级：新浪财经 → AKShare（备用）
         """
         init_mode = InitMode.OVERWRITE if mode == "overwrite" else InitMode.ADD
         return self._portfolio_service.initialize_position(
             stock_code=stock_code,
-            stock_name=stock_name,
             quantity=quantity,
             avg_cost=avg_cost,
             current_price=current_price,
+            stock_name=stock_name,
             total_cost=total_cost,
             purchase_date=purchase_date,
             mode=init_mode,
@@ -314,8 +319,13 @@ class MyStocks:
                 price = price_fetcher(position.stock_code)
                 if price and price > 0:
                     position.current_price = price
-                    position.profit_loss = (price - position.avg_cost) * position.quantity
-                    position.profit_rate = ((price - position.avg_cost) / position.avg_cost * 100)
+                    # 负成本盈亏计算
+                    if position.avg_cost < 0:
+                        position.profit_loss = (abs(position.avg_cost) + price) * position.quantity
+                        position.profit_rate = None  # 负成本时盈亏率无意义
+                    else:
+                        position.profit_loss = (price - position.avg_cost) * position.quantity
+                        position.profit_rate = ((price - position.avg_cost) / position.avg_cost * 100) if position.avg_cost > 0 else 0
             except Exception as e:
                 pass
         self._session.commit()

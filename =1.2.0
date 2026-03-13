@@ -1,0 +1,6 @@
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://mirrors.aliyun.com/pypi/simple/
+Collecting schedule
+  Downloading https://mirrors.aliyun.com/pypi/packages/20/a7/84c96b61fd13205f2cafbe263cdb2745965974bdf3e0078f121dfeca5f02/schedule-1.2.2-py3-none-any.whl (12 kB)
+Installing collected packages: schedule
+Successfully installed schedule-1.2.2

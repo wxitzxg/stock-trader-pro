@@ -145,6 +145,11 @@ MONITOR_CONFIG = {
     "interval_after_hours": 1800,  # 收盘后 30 分钟
     "interval_night": 3600,     # 凌晨 1 小时
     "interval_weekend": 3600,   # 周末 1 小时
+
+    # 价格更新配置
+    "price_update_enabled": True,           # 是否启用价格更新
+    "price_update_check_interval": 60,      # 检查间隔（秒）- 多久检查一次是否该更新
+    "price_update_interval_market": 300,    # 交易时段更新频率（秒）- 每 5 分钟更新一次
 }
 
 # ========== 报告输出配置 ==========

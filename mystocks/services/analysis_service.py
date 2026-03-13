@@ -31,8 +31,16 @@ class AnalysisService:
 
         total_cost = sum(p.avg_cost * p.quantity for p in positions)
         total_value = sum(p.current_price * p.quantity for p in positions)
-        total_profit = total_value - total_cost
-        total_profit_rate = (total_profit / total_cost * 100) if total_cost > 0 else 0
+        total_profit = sum(p.profit_loss for p in positions)  # 直接使用已计算的 profit_loss
+
+        # 总盈亏率计算：当存在负成本持仓时，只对正成本部分计算
+        has_negative_cost = any(p.avg_cost < 0 for p in positions)
+        if has_negative_cost:
+            # 存在负成本持仓，总盈亏率标注为 None
+            total_profit_rate = None
+        else:
+            total_profit_rate = (total_profit / total_cost * 100) if total_cost > 0 else 0
+
         total_realized = sum(p.realized_profit for p in positions)
 
         return {
@@ -41,7 +49,8 @@ class AnalysisService:
             "total_profit": total_profit,
             "total_profit_rate": total_profit_rate,
             "total_realized_profit": total_realized,
-            "position_count": len(positions)
+            "position_count": len(positions),
+            "has_negative_cost": has_negative_cost  # 标记是否存在负成本持仓
         }
 
     def get_concentration(self) -> Dict:

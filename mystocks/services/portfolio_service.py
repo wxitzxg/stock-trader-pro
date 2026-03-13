@@ -4,12 +4,14 @@ PortfolioService - 持仓业务逻辑
 from typing import Optional, List, Dict
 from datetime import datetime
 from enum import Enum
+from decimal import Decimal, ROUND_HALF_UP
 
 from mystocks.models.position import Position, PositionLot
 from mystocks.models.transaction import Transaction
 from mystocks.storage.repositories.position_repo import PositionRepository
 from mystocks.storage.repositories.transaction_repo import TransactionRepository
 from config.settings import TRADING_FEES
+from stockquery import get_default_service
 
 
 class InitMode(str, Enum):
@@ -248,10 +250,10 @@ class PortfolioService:
     def initialize_position(
         self,
         stock_code: str,
-        stock_name: str,
         quantity: int,
         avg_cost: float,
-        current_price: float,
+        current_price: float = None,
+        stock_name: str = None,
         total_cost: float = None,
         purchase_date: str = None,
         mode: InitMode = InitMode.OVERWRITE,
@@ -264,31 +266,57 @@ class PortfolioService:
         - 不创建 Transaction 记录（因为不是实际交易，是历史持仓导入）
         - 支持覆盖或累加模式
         - 直接设置 avg_cost 和 current_price
+        - 自动获取股票信息（当 current_price 或 stock_name 为 None 时）
 
         Args:
-            stock_code: 股票代码
-            stock_name: 股票名称
-            quantity: 持仓数量
-            avg_cost: 成本价
-            current_price: 当前价（用于计算市值）
-            total_cost: 总成本（可选，默认 quantity * avg_cost）
+            stock_code: 股票代码（必需）
+            quantity: 持仓数量（必需）
+            avg_cost: 成本价，可为负数，精度为 4 位小数（必需）
+            current_price: 当前价，为 None 时自动从 API 获取（可选）
+            stock_name: 股票名称，为 None 时自动从 API 获取（可选）
+            total_cost: 总成本（可选，默认 quantity * abs(avg_cost)）
             purchase_date: 建仓日期（可选，默认今天）
             mode: 初始化模式（overwrite=覆盖，add=累加）
             notes: 备注
 
         Returns:
             创建的持仓对象
+
+        股票信息获取逻辑：
+            - 当 current_price 或 stock_name 为 None 时
+            - 调用 UnifiedStockQueryService.get_quote(stock_code) 获取
+            - 数据源优先级：新浪财经 → AKShare（备用）
         """
-        if quantity <= 0:
-            raise ValueError("持仓数量必须为正数")
-        if avg_cost <= 0:
-            raise ValueError("成本价必须为正数")
-        if current_price < 0:
-            raise ValueError("当前价不能为负数")
+        # 自动获取股票信息
+        if current_price is None or stock_name is None:
+            stock_query_service = get_default_service(timeout=10)
+            quote = stock_query_service.get_quote(stock_code)
+
+            if not quote:
+                raise ValueError(f"无法获取股票 {stock_code} 的实时行情")
+
+            # 使用 API 返回的数据填充缺失字段
+            if stock_name is None:
+                stock_name = quote.get('name', stock_code)
+            if current_price is None:
+                current_price = quote.get('price', 0)
+
+                if current_price <= 0:
+                    raise ValueError(f"股票 {stock_code} 的当前价格无效")
+
+        # 精度控制：四舍五入到 4 位小数
+        avg_cost = self._round_to_4_decimals(avg_cost)
+        current_price = self._round_to_4_decimals(current_price)
 
         # 计算总成本
         if total_cost is None:
-            total_cost = quantity * avg_cost
+            total_cost = quantity * abs(avg_cost)
+
+        # 验证（允许负成本）
+        if quantity <= 0:
+            raise ValueError("持仓数量必须为正数")
+        if avg_cost == 0:
+            raise ValueError("成本价不能为 0")
 
         # 解析建仓日期
         if purchase_date:
@@ -316,8 +344,10 @@ class PortfolioService:
                 position.avg_cost = avg_cost
                 position.current_price = current_price
                 position.total_cost = total_cost
-                position.profit_loss = (current_price - avg_cost) * quantity
-                position.profit_rate = ((current_price - avg_cost) / avg_cost * 100) if avg_cost > 0 else 0
+                # 负成本盈亏计算
+                position.profit_loss, position.profit_rate = self._calculate_profit_loss(
+                    avg_cost, current_price, quantity
+                )
                 self._position_repo.update(position)
             else:
                 # 累加模式：类似 buy() 逻辑
@@ -328,11 +358,14 @@ class PortfolioService:
                 position.quantity = new_quantity
                 position.total_cost += total_cost
                 position.current_price = current_price  # 更新当前价
-                position.profit_loss = (current_price - position.avg_cost) * quantity
-                position.profit_rate = ((current_price - position.avg_cost) / position.avg_cost * 100) if position.avg_cost > 0 else 0
+                # 负成本盈亏计算
+                position.profit_loss, position.profit_rate = self._calculate_profit_loss(
+                    position.avg_cost, current_price, new_quantity
+                )
                 self._position_repo.update(position)
         else:
             # 新建持仓
+            profit_loss, profit_rate = self._calculate_profit_loss(avg_cost, current_price, quantity)
             position = Position(
                 stock_code=stock_code,
                 stock_name=stock_name,
@@ -340,8 +373,8 @@ class PortfolioService:
                 avg_cost=avg_cost,
                 current_price=current_price,
                 total_cost=total_cost,
-                profit_loss=(current_price - avg_cost) * quantity,
-                profit_rate=((current_price - avg_cost) / avg_cost * 100) if avg_cost > 0 else 0
+                profit_loss=profit_loss,
+                profit_rate=profit_rate
             )
             self._position_repo.add(position)
 
@@ -359,6 +392,44 @@ class PortfolioService:
         self._position_repo.add_lot(lot)
 
         return position
+
+    def _round_to_4_decimals(self, value: float) -> float:
+        """四舍五入到 4 位小数"""
+        return float(Decimal(str(value)).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP))
+
+    def _calculate_profit_loss(self, avg_cost: float, current_price: float, quantity: int) -> tuple:
+        """
+        计算盈亏金额和盈亏率
+
+        负成本规则：
+        - 当 avg_cost < 0 时，不计算盈亏率（返回 0 作为占位符）
+        - 盈利金额 = (|成本价 | + 现价) × 数量
+
+        Args:
+            avg_cost: 成本价（可为负数）
+            current_price: 当前价
+            quantity: 持仓数量
+
+        Returns:
+            (profit_loss, profit_rate) 元组
+            - profit_loss: 盈亏金额（4 位小数精度）
+            - profit_rate: 盈亏率（负成本时为 0）
+        """
+        if avg_cost < 0:
+            # 负成本：盈利 = (|成本 | + 现价) × 数量
+            profit_loss = (abs(avg_cost) + current_price) * quantity
+            profit_rate = 0.0  # 负成本时盈亏率无意义，用 0 占位
+        else:
+            # 正成本：标准公式
+            profit_loss = (current_price - avg_cost) * quantity
+            profit_rate = ((current_price - avg_cost) / avg_cost * 100) if avg_cost > 0 else 0
+
+        # 精度控制
+        profit_loss = self._round_to_4_decimals(profit_loss)
+        if profit_rate is not None:
+            profit_rate = self._round_to_4_decimals(profit_rate)
+
+        return profit_loss, profit_rate
 
     def initialize_positions_batch(
         self,

@@ -237,13 +237,19 @@ class MonitorReportGenerator:
             profit_color = "🟢" if p.profit_loss >= 0 else "🔴"
             alert_indicator = "⚠️" if p.alerts else "✅"
 
+            # 负成本时盈亏率显示为 N/A
+            if p.avg_cost < 0 or p.profit_rate is None:
+                profit_rate_str = "N/A (负成本)"
+            else:
+                profit_rate_str = f"{p.profit_rate:+.1f}%"
+
             lines.append(f"#### {p.stock_name} ({p.stock_code})")
             lines.append("")
             lines.append(f"- **持仓数量**: {p.quantity} 股")
-            lines.append(f"- **成本价**: ¥{p.avg_cost:.2f}")
+            lines.append(f"- **成本价**: ¥{p.avg_cost:.4f}")
             lines.append(f"- **当前价**: ¥{p.current_price:.2f}")
             lines.append(f"- **市值**: ¥{p.current_price * p.quantity:,.2f}")
-            lines.append(f"- **浮动盈亏**: {profit_color}¥{p.profit_loss:+,.2f} ({p.profit_rate:+.1f}%)")
+            lines.append(f"- **浮动盈亏**: {profit_color}¥{p.profit_loss:+,.2f} ({profit_rate_str})")
             lines.append(f"- **状态**: {alert_indicator}")
 
             if p.alerts:
@@ -377,8 +383,15 @@ class MonitorReportGenerator:
         if positions:
             total_value = sum(p.current_price * p.quantity for p in positions)
             total_cost = sum(p.avg_cost * p.quantity for p in positions)
-            total_profit = total_value - total_cost
-            profit_rate = (total_profit / total_cost * 100) if total_cost > 0 else 0
+            # 使用已计算的 profit_loss，而不是重新计算
+            total_profit = sum(p.profit_loss for p in positions)
+            # 检查是否存在负成本持仓
+            has_negative_cost = any(p.avg_cost < 0 for p in positions)
+            if has_negative_cost:
+                profit_rate_str = "N/A (存在负成本持仓)"
+            else:
+                profit_rate = (total_profit / total_cost * 100) if total_cost > 0 else 0
+                profit_rate_str = f"{profit_rate:+.1f}%"
             alert_count = sum(len(p.alerts) for p in positions)
 
             lines.append("### 持仓股")
@@ -387,7 +400,7 @@ class MonitorReportGenerator:
             lines.append(f"| 持仓数量 | {len(positions)} 只 |")
             lines.append(f"| 总市值 | ¥{total_value:,.2f} |")
             lines.append(f"| 总成本 | ¥{total_cost:,.2f} |")
-            lines.append(f"| 浮动盈亏 | ¥{total_profit:+,.2f} ({profit_rate:+.1f}%) |")
+            lines.append(f"| 浮动盈亏 | ¥{total_profit:+,.2f} ({profit_rate_str}) |")
             lines.append(f"| 预警数量 | {alert_count} 条 |")
             lines.append("")
 
@@ -539,11 +552,16 @@ class MonitorReportGenerator:
             # 颜色标记
             profit_color = "🟢" if p.profit_loss >= 0 else "🔴"
             alert_indicator = "⚠️" if p.alerts else "✅"
+            # 负成本时盈亏率显示为 N/A
+            if p.avg_cost < 0 or p.profit_rate is None:
+                profit_rate_str = "N/A"
+            else:
+                profit_rate_str = f"{p.profit_rate:+.1f}%"
 
             lines.append(
                 f"| {p.stock_code} | {p.stock_name} | {p.quantity} | "
-                f"¥{p.avg_cost:.2f} | ¥{p.current_price:.2f} | "
-                f"{profit_color}¥{p.profit_loss:+,.0f} | {p.profit_rate:+.1f}% | "
+                f"¥{p.avg_cost:.4f} | ¥{p.current_price:.2f} | "
+                f"{profit_color}¥{p.profit_loss:+,.0f} | {profit_rate_str} | "
                 f"{alert_indicator} |"
             )
 
@@ -556,10 +574,14 @@ class MonitorReportGenerator:
             lines.append(f"#### {p.stock_name} ({p.stock_code})")
             lines.append("")
             lines.append(f"- **持仓数量**: {p.quantity} 股")
-            lines.append(f"- **成本价**: ¥{p.avg_cost:.2f}")
+            lines.append(f"- **成本价**: ¥{p.avg_cost:.4f}")
             lines.append(f"- **当前价**: ¥{p.current_price:.2f}")
             lines.append(f"- **市值**: ¥{p.current_price * p.quantity:,.2f}")
-            lines.append(f"- **浮动盈亏**: ¥{p.profit_loss:+,.2f} ({p.profit_rate:+.1f}%)")
+            # 负成本时盈亏率显示为 N/A
+            if p.avg_cost < 0 or p.profit_rate is None:
+                lines.append(f"- **浮动盈亏**: ¥{p.profit_loss:+,.2f} (N/A - 负成本)")
+            else:
+                lines.append(f"- **浮动盈亏**: ¥{p.profit_loss:+,.2f} ({p.profit_rate:+.1f}%)")
 
             if p.alerts:
                 lines.append(f"- **预警**:")
@@ -590,10 +612,16 @@ class MonitorReportGenerator:
 
         for p in positions:
             profit_color = "🟢" if p.profit_loss >= 0 else "🔴"
+            # 负成本时盈亏率显示为 N/A
+            if p.avg_cost < 0 or p.profit_rate is None:
+                profit_rate_str = "N/A"
+            else:
+                profit_rate_str = f"{p.profit_rate:+.1f}%"
+
             lines.append(
                 f"| {p.stock_code} | {p.stock_name} | {p.quantity} | "
-                f"¥{p.avg_cost:.2f} | ¥{p.current_price:.2f} | "
-                f"{profit_color}¥{p.profit_loss:+,.0f} | {p.profit_rate:+.1f}% |"
+                f"¥{p.avg_cost:.4f} | ¥{p.current_price:.2f} | "
+                f"{profit_color}¥{p.profit_loss:+,.0f} | {profit_rate_str} |"
             )
 
         return "\n".join(lines)
@@ -693,8 +721,8 @@ class MonitorReportGenerator:
                 if max_position > 0.3:
                     tips.append(f"- ⚠️ 持仓集中度较高，最大持仓占比 {max_position:.1%}")
 
-        # 检查亏损股票
-        loss_positions = [p for p in positions if p.profit_rate < -10]
+        # 检查亏损股票（排除负成本持仓）
+        loss_positions = [p for p in positions if p.avg_cost > 0 and p.profit_rate < -10]
         if loss_positions:
             stocks = [f"{p.stock_name}({p.profit_rate:.1f}%)" for p in loss_positions]
             tips.append(f"- 🔴 以下股票亏损超过 10%: {', '.join(stocks)}")

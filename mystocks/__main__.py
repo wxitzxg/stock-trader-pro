@@ -3,13 +3,14 @@
 我的股票 - 命令行工具
 
 Commands:
-  mystocks buy     买入股票
-  mystocks sell    卖出股票
-  mystocks pos     查看持仓
-  mystocks watch   收藏管理
-  mystocks summary 资产汇总
-  mystocks history 交易历史
-  mystocks init    初始化持仓（导入已有持仓）
+  mystocks buy          买入股票
+  mystocks sell         卖出股票
+  mystocks pos          查看持仓
+  mystocks watch        收藏管理
+  mystocks summary      资产汇总
+  mystocks history      交易历史
+  mystocks init         初始化持仓（导入已有持仓）
+  mystocks update-prices 定时更新持仓价格
 """
 
 import sys
@@ -17,6 +18,7 @@ import argparse
 from datetime import datetime
 
 from mystocks import MyStocks
+from commands.update_prices import cmd_update_prices, setup_parser as setup_update_prices_parser
 
 
 def cmd_init(args):
@@ -32,7 +34,7 @@ def cmd_init(args):
             )
             print(f"✅ 成功导入 {len(positions)} 只持仓")
             for p in positions:
-                print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.2f}")
+                print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.4f}")
 
         elif args.broker_file:
             # 从券商交割单导入
@@ -43,25 +45,31 @@ def cmd_init(args):
             )
             print(f"✅ 成功导入 {len(positions)} 只持仓")
             for p in positions:
-                print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.2f}")
+                print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.4f}")
 
         else:
-            # 单只初始化
+            # 单只初始化（支持自动获取股票信息）
             position = ms.initialize_position(
                 stock_code=args.code,
-                stock_name=args.name or args.code,
                 quantity=args.qty,
                 avg_cost=args.cost,
-                current_price=args.price,
+                current_price=args.price,  # 可为 None，自动获取
+                stock_name=args.name,  # 可为 None，自动获取
                 purchase_date=args.date,
                 mode=args.mode
             )
             print(f"✅ 初始化成功：{args.code}")
             print(f"   持仓：{position.quantity} 股")
-            print(f"   成本价：¥{position.avg_cost:.2f}")
+            print(f"   成本价：¥{position.avg_cost:.4f}")
             print(f"   当前价：¥{position.current_price:.2f}")
-            profit = (position.current_price - position.avg_cost) * position.quantity
-            print(f"   浮动盈亏：¥{profit:+.2f} ({profit/position.avg_cost/position.quantity*100:+.1f}%)")
+            # 负成本盈亏计算
+            if position.avg_cost < 0:
+                profit = (abs(position.avg_cost) + position.current_price) * position.quantity
+                print(f"   浮动盈亏：¥{profit:+.2f} (N/A - 负成本)")
+            else:
+                profit = (position.current_price - position.avg_cost) * position.quantity
+                profit_rate = profit / position.avg_cost / position.quantity * 100
+                print(f"   浮动盈亏：¥{profit:+.2f} ({profit_rate:+.1f}%)")
 
 
 def cmd_buy(args):
@@ -119,28 +127,40 @@ def cmd_pos(args):
         for p in positions:
             market_value = p.current_price * p.quantity
             cost_value = p.avg_cost * p.quantity
-            profit = market_value - cost_value
-            profit_pct = profit / cost_value * 100 if cost_value > 0 else 0
+            # 使用已计算的 profit_loss，而不是重新计算
+            profit = p.profit_loss
+            # 负成本时盈亏率无意义
+            if p.avg_cost < 0:
+                profit_pct_str = "N/A (负成本)"
+            else:
+                profit_pct = p.profit_rate if p.profit_rate is not None else 0
+                profit_pct_str = f"{profit_pct:+.1f}%"
 
             print(f"📌 {p.stock_code} ({p.stock_name})")
             print(f"   持仓：{p.quantity} 股")
-            print(f"   成本价：¥{p.avg_cost:.2f}")
+            print(f"   成本价：¥{p.avg_cost:.4f}")
             print(f"   当前价：¥{p.current_price:.2f}")
             print(f"   市值：¥{market_value:.2f}")
-            print(f"   盈亏：¥{profit:+.2f} ({profit_pct:+.1f}%)")
+            print(f"   盈亏：¥{profit:+.2f} ({profit_pct_str})")
             print(f"   实现盈亏：¥{p.realized_profit:+.2f}")
             print()
 
             total_value += market_value
             total_cost += cost_value
 
-        total_profit = total_value - total_cost
-        total_profit_pct = total_profit / total_cost * 100 if total_cost > 0 else 0
+        total_profit = sum(p.profit_loss for p in positions)  # 使用已计算的 profit_loss
+        # 检查是否存在负成本持仓
+        has_negative_cost = any(p.avg_cost < 0 for p in positions)
+        if has_negative_cost:
+            total_profit_pct_str = "N/A (存在负成本持仓)"
+        else:
+            total_profit_pct = total_profit / total_cost * 100 if total_cost > 0 else 0
+            total_profit_pct_str = f"{total_profit_pct:+.1f}%"
 
         print("───────────────────────────────────────────────────────")
         print(f"合计 市值：¥{total_value:.2f}")
         print(f"合计 成本：¥{total_cost:.2f}")
-        print(f"合计 盈亏：¥{total_profit:+.2f} ({total_profit_pct:+.1f}%)")
+        print(f"合计 盈亏：¥{total_profit:+.2f} ({total_profit_pct_str})")
         print(f"持仓数量：{len(positions)} 只")
 
         # 集中度分析
@@ -209,7 +229,11 @@ def cmd_summary(args):
 
         print(f"💰 总市值：¥{summary['total_value']:.2f}")
         print(f"📊 总成本：¥{summary['total_cost']:.2f}")
-        print(f"📈 浮动盈亏：¥{summary['total_profit']:+.2f} ({summary['total_profit_rate']:+.1f}%)")
+        # 负成本时盈亏率显示为 N/A
+        if summary.get('total_profit_rate') is None or summary.get('has_negative_cost'):
+            print(f"📈 浮动盈亏：¥{summary['total_profit']:+.2f} (N/A - 存在负成本持仓)")
+        else:
+            print(f"📈 浮动盈亏：¥{summary['total_profit']:+.2f} ({summary['total_profit_rate']:+.1f}%)")
         print(f"💵 已实现盈亏：¥{summary['total_realized_profit']:+.2f}")
         print(f"📦 持仓数量：{summary['position_count']} 只")
 
@@ -306,6 +330,11 @@ def main():
     init_parser.add_argument('--mode', choices=['overwrite', 'add'], default='overwrite',
                             help='导入模式：overwrite=覆盖原有持仓，add=累加到原有持仓')
     init_parser.set_defaults(func=cmd_init)
+
+    # update-prices 命令 - 定时更新持仓价格
+    update_prices_parser = subparsers.add_parser('update-prices', help='定时更新持仓价格')
+    setup_update_prices_parser(update_prices_parser)
+    update_prices_parser.set_defaults(func=cmd_update_prices)
 
     args = parser.parse_args()
 

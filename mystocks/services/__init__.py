@@ -5,12 +5,14 @@ from typing import Optional
 from mystocks.services.portfolio_service import PortfolioService
 from mystocks.services.watchlist_service import WatchlistService
 from mystocks.services.analysis_service import AnalysisService
+from mystocks.services.price_update_service import PriceUpdateService
 from mystocks.storage.database import get_db
 
 __all__ = [
     'PortfolioService',
     'WatchlistService',
     'AnalysisService',
+    'PriceUpdateService',
     # Compatibility functions
     'get_stock_quote',
     'format_stock_info',
