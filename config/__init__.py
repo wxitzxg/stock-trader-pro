@@ -1,0 +1,26 @@
+"""
+Configuration module
+"""
+from .settings import (
+    BASE_DIR,
+    DATABASE_PATH,
+    AKSHARE_TIMEOUT,
+    STRATEGY_PARAMS,
+    SIGNAL_THRESHOLD,
+    PRICE_ALERT_THRESHOLD,
+    TRADING_FEES,
+    LOG_LEVEL,
+    LOG_FORMAT
+)
+
+__all__ = [
+    'BASE_DIR',
+    'DATABASE_PATH',
+    'AKSHARE_TIMEOUT',
+    'STRATEGY_PARAMS',
+    'SIGNAL_THRESHOLD',
+    'PRICE_ALERT_THRESHOLD',
+    'TRADING_FEES',
+    'LOG_LEVEL',
+    'LOG_FORMAT'
+]

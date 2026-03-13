@@ -1,0 +1,11 @@
+{
+  "owner": "felix",
+  "slug": "stock-trader-pro",
+  "displayName": "Stock Trader Pro",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1741272000000,
+    "commit": "https://github.com/openclaw/skills/commit/main"
+  },
+  "history": []
+}
