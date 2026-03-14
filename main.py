@@ -166,20 +166,6 @@ Examples:
     watchlist_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     watchlist_parser.set_defaults(func=cmd_watchlist)
 
-    # portfolio 命令 - 使用新的 mystocks 模块
-    portfolio_parser = subparsers.add_parser('portfolio', help='持仓管理')
-    portfolio_parser.add_argument('--list', action='store_true', help='查看持仓')
-    portfolio_parser.add_argument('--buy', action='store_true', help='买入')
-    portfolio_parser.add_argument('--sell', action='store_true', help='卖出')
-    portfolio_parser.add_argument('--symbol', help='股票代码')
-    portfolio_parser.add_argument('--qty', type=int, help='股数')
-    portfolio_parser.add_argument('--price', type=float, help='成交价')
-    portfolio_parser.add_argument('--name', help='股票名称')
-    portfolio_parser.add_argument('--notes', help='备注')
-    portfolio_parser.add_argument('--all', action='store_true', help='清仓（卖出全部）')
-    portfolio_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
-    portfolio_parser.set_defaults(func=cmd_portfolio)
-
     # mystocks 命令 - 新的综合资产管理
     mystocks_parser = subparsers.add_parser('mystocks', help='我的股票 (综合资产管理)')
     mystocks_parser.add_argument('action', choices=['pos', 'buy', 'sell', 'watch', 'summary', 'history'], help='操作类型')
