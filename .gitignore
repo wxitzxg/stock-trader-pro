@@ -179,4 +179,4 @@ Desktop.ini
 # Data files that might contain sensitive information
 data/*.csv
 data/*.xlsx
-*.data
+*.data.worktrees/
