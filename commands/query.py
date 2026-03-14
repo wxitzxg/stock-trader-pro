@@ -3,6 +3,7 @@
 query 命令 - 查询股票实时行情
 """
 
+import json
 from stockquery import UnifiedStockQueryService
 
 
@@ -36,6 +37,14 @@ def format_stock_info(quote: dict) -> str:
            f"  成交量：{quote.get('volume', 0):,}"
 
 
+def format_quote_json(quotes: list) -> str:
+    """格式化行情数据为 JSON"""
+    return json.dumps({
+        "stocks": quotes,
+        "total": len(quotes)
+    }, ensure_ascii=False, indent=2)
+
+
 def cmd_query(args):
     """query 命令处理 - 查询股票实时行情"""
     if not args.codes:
@@ -43,10 +52,24 @@ def cmd_query(args):
         print("Example: python main.py query 600519 000001 300750")
         return
 
-    print(f"查询 {len(args.codes)} 只股票实时行情...\n")
-
     stock_query = UnifiedStockQueryService()
+    quotes = []
+
     for code in args.codes:
         quote = stock_query.get_quote(code)
-        print(format_stock_info(quote))
-        print()
+        if quote:
+            quotes.append(quote)
+
+    # JSON 输出
+    if getattr(args, 'json', False):
+        print(format_quote_json(quotes))
+    else:
+        # 文本输出
+        if not quotes:
+            print("查询失败，未获取到任何数据")
+            return
+
+        print(f"查询 {len(args.codes)} 只股票实时行情...\n")
+        for quote in quotes:
+            print(format_stock_info(quote))
+            print()

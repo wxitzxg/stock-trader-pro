@@ -4,7 +4,28 @@ watchlist 命令 - 收藏管理
 使用新的 MyStocks 综合模块
 """
 
+import json
 from mystocks import MyStocks
+
+
+def format_watchlist_json(stocks: list) -> str:
+    """格式化收藏列表为 JSON"""
+    output = {
+        "watchlist": [],
+        "total": len(stocks)
+    }
+
+    for wl in stocks:
+        output["watchlist"].append({
+            "stock_code": wl.stock_code,
+            "stock_name": wl.stock_name,
+            "tags": wl.tags,
+            "target_price": wl.target_price,
+            "stop_loss": wl.stop_loss,
+            "notes": wl.notes
+        })
+
+    return json.dumps(output, ensure_ascii=False, indent=2)
 
 
 def cmd_watchlist(args):
@@ -20,22 +41,45 @@ def cmd_watchlist(args):
                 target_price=args.target,
                 stop_loss=args.stop_loss
             )
-            print(f"✅ 添加收藏股：{args.add} {args.name or ''}")
+            if getattr(args, 'json', False):
+                print(json.dumps({
+                    "success": True,
+                    "stock_code": wl.stock_code,
+                    "stock_name": wl.stock_name
+                }, ensure_ascii=False, indent=2))
+            else:
+                print(f"✅ 添加收藏股：{args.add} {args.name or ''}")
 
         elif args.remove:
             # 删除收藏
-            if ms.remove_from_watchlist(args.remove):
-                print(f"✅ 已删除：{args.remove}")
+            success = ms.remove_from_watchlist(args.remove)
+            if getattr(args, 'json', False):
+                print(json.dumps({
+                    "success": success,
+                    "stock_code": args.remove
+                }, ensure_ascii=False, indent=2))
             else:
-                print(f"❌ 未找到：{args.remove}")
+                if success:
+                    print(f"✅ 已删除：{args.remove}")
+                else:
+                    print(f"❌ 未找到：{args.remove}")
 
         elif args.list or True:  # 默认显示列表
             stocks = ms.get_watchlist()
 
             if not stocks:
-                print("收藏股列表为空")
+                if getattr(args, 'json', False):
+                    print(json.dumps({"watchlist": [], "total": 0}, ensure_ascii=False, indent=2))
+                else:
+                    print("收藏股列表为空")
                 return
 
+            # JSON 输出
+            if getattr(args, 'json', False):
+                print(format_watchlist_json(stocks))
+                return
+
+            # 文本输出
             print("\n═══════════════════════════════════════════════════════")
             print("  收藏股列表")
             print("═══════════════════════════════════════════════════════\n")

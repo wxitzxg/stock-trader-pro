@@ -2,7 +2,7 @@
 Account 模型 - 账号表
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
 
 from mystocks.models.base import Base
 
@@ -16,6 +16,7 @@ class Account(Base):
     cash_balance = Column(Float, default=0.0, nullable=False)  # 当前现金余额
     total_invested = Column(Float, default=0.0, nullable=False)  # 累计投入本金
     total_realized_pnl = Column(Float, default=0.0, nullable=False)  # 累计已实现盈亏
+    is_default = Column(Boolean, default=False, nullable=False)  # 是否为默认账户
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

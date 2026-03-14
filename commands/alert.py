@@ -4,6 +4,7 @@ alert 命令 - 执行一次预警检查
 使用新的 realalerts 模块
 """
 
+import json
 from mystocks.storage.database import get_db
 from mystocks.services import WatchlistService
 from realalerts import RealtimeAlertEngine, AlertConfig
@@ -20,17 +21,19 @@ def cmd_alert(args):
     watchlist_stocks = watchlist_svc.get_all()
 
     if not watchlist_stocks:
-        print("收藏股列表为空")
+        if getattr(args, 'json', False):
+            print(json.dumps({"watchlist_count": 0, "alerts": []}, ensure_ascii=False, indent=2))
+        else:
+            print("收藏股列表为空")
         return
 
-    print(f"智能监控 {len(watchlist_stocks)} 只收藏股...\n")
-
-    # 使用新的 realalerts 引擎
-    engine = RealtimeAlertEngine()
     stock_query = UnifiedStockQueryService()
+    engine = RealtimeAlertEngine()
 
     # 将收藏股转换为监控配置
     alerts_triggered = []
+    alerts_data = []
+
     for wl in watchlist_stocks:
         code = wl.stock_code
         name = wl.stock_name
@@ -109,6 +112,7 @@ def cmd_alert(args):
         )
 
         if alerts:
+            # 文本格式
             msg = engine.format_alerts(
                 code=code,
                 name=name,
@@ -119,14 +123,37 @@ def cmd_alert(args):
             )
             alerts_triggered.append(msg)
 
-    if alerts_triggered:
-        print("=" * 60)
-        print(f"触发 {len(alerts_triggered)} 条预警:")
-        print("=" * 60)
-        for alert in alerts_triggered:
-            print(alert)
-            print("-" * 40)
-    else:
-        print("暂无预警")
+            # JSON 格式
+            for alert in alerts:
+                alerts_data.append({
+                    "stock_code": code,
+                    "stock_name": name,
+                    "price": price,
+                    "change_pct": data['change_pct'],
+                    "alert_type": alert.alert_type,
+                    "alert_level": "高危" if alert.weight >= 3 else ("警告" if alert.weight >= 2 else "提示"),
+                    "message": alert.message,
+                    "weight": alert.weight
+                })
 
     session.close()
+
+    # JSON 输出
+    if getattr(args, 'json', False):
+        output = {
+            "watchlist_count": len(watchlist_stocks),
+            "alert_count": len(alerts_data),
+            "alerts": alerts_data
+        }
+        print(json.dumps(output, ensure_ascii=False, indent=2))
+    else:
+        # 文本输出
+        if alerts_triggered:
+            print("=" * 60)
+            print(f"触发 {len(alerts_triggered)} 条预警:")
+            print("=" * 60)
+            for alert in alerts_triggered:
+                print(alert)
+                print("-" * 40)
+        else:
+            print("暂无预警")

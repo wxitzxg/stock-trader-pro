@@ -18,6 +18,7 @@ from .account import cmd_account, cmd_holdings
 from .update_prices import cmd_update_prices
 from .update_kline import cmd_update_kline
 from .smart_monitor import cmd_smart_monitor
+from .update_stock_list import cmd_update_stock_list
 
 __all__ = [
     'analyze_stock',
@@ -38,4 +39,5 @@ __all__ = [
     'cmd_update_prices',
     'cmd_update_kline',
     'cmd_smart_monitor',
+    'cmd_update_stock_list',
 ]

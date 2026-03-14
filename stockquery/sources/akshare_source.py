@@ -332,7 +332,7 @@ class AKShareDataSource(BaseDataSource):
 
     def search_stock(self, keyword: str) -> Optional[List[Dict[str, Any]]]:
         """
-        搜索股票（支持代码或名称模糊匹配）
+        搜索股票（支持代码或名称模糊匹配）- 优先使用本地缓存
 
         Args:
             keyword: 搜索关键词
@@ -340,6 +340,31 @@ class AKShareDataSource(BaseDataSource):
         Returns:
             匹配的股票列表
         """
+        # 优先从数据库缓存搜索
+        if self.db:
+            try:
+                from mystocks.storage.repositories.stock_list_repo import StockListRepository
+                stock_list_repo = StockListRepository(self.db.get_session())
+                results = stock_list_repo.search(keyword, limit=20)
+
+                if results:
+                    return [
+                        {
+                            '代码': stock.code,
+                            '名称': stock.name,
+                            '最新价': stock.latest_price or 0,
+                            '涨跌幅': stock.change_pct or 0,
+                        }
+                        for stock in results
+                    ]
+            except Exception as e:
+                print(f"数据库搜索失败，切换到 AKShare API: {e}")
+
+        # 数据库搜索失败或无数据，调用 AKShare API
+        return self._search_from_akshare(keyword)
+
+    def _search_from_akshare(self, keyword: str) -> Optional[List[Dict[str, Any]]]:
+        """从 AKShare 搜索股票（备用方案）"""
         try:
             df = ak.stock_zh_a_spot_em()
 
@@ -353,6 +378,65 @@ class AKShareDataSource(BaseDataSource):
         except Exception as e:
             print(f"AKShare 股票搜索失败：{e}")
             return None
+
+    def refresh_stock_list(self, incremental: bool = False) -> int:
+        """
+        刷新股票列表缓存
+
+        Args:
+            incremental: 是否增量更新（只更新已有股票的价格）
+
+        Returns:
+            更新的股票数量
+        """
+        from mystocks.storage.repositories.stock_list_repo import StockListRepository
+
+        if not self.db:
+            print("错误：数据库实例未初始化")
+            return 0
+
+        stock_list_repo = StockListRepository(self.db.get_session())
+
+        try:
+            print("正在从 AKShare 获取 A 股列表...")
+            df = ak.stock_zh_a_spot_em()
+            print(f"获取到 {len(df)} 只股票数据")
+
+            count = 0
+            for _, row in df.iterrows():
+                code = row['代码']
+
+                # 增量更新模式：只更新已存在的股票
+                if incremental:
+                    existing = stock_list_repo.get(code)
+                    if not existing:
+                        continue
+
+                data = {
+                    'code': code,
+                    'name': row['名称'],
+                    'latest_price': float(row['最新价']) if row['最新价'] else None,
+                    'change_pct': float(row['涨跌幅']) if row['涨跌幅'] else None,
+                    'volume': float(row['成交量']) if row['成交量'] else None,
+                    'amount': float(row['成交额']) if row['成交额'] else None,
+                    'market_cap': float(row['总市值']) if row['总市值'] else None,
+                    'pe_ratio': float(row['市盈率 - 动态']) if row.get('市盈率 - 动态') else None,
+                }
+
+                stock_list_repo.upsert(data)
+                count += 1
+
+                # 每 100 只打印进度
+                if count % 100 == 0:
+                    print(f"  已处理 {count} 只股票...")
+
+            stock_list_repo.session.commit()
+            print(f"✅ 刷新完成，共更新 {count} 只股票")
+            return count
+
+        except Exception as e:
+            print(f"AKShare 股票列表刷新失败：{e}")
+            return 0
 
     def get_sector_rank(self, sector_type: int = 1, limit: int = 20) -> Optional[Dict[str, Any]]:
         """

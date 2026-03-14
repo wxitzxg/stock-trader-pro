@@ -4,7 +4,59 @@ portfolio 命令 - 持仓管理
 使用新的 MyStocks 综合模块
 """
 
+import json
 from mystocks import MyStocks
+
+
+def format_positions_json(positions: list, concentration: dict) -> str:
+    """格式化持仓列表为 JSON"""
+    output = {
+        "positions": [],
+        "summary": {},
+        "concentration": {}
+    }
+
+    total_value = 0
+    total_cost = 0
+
+    for p in positions:
+        market_value = p.current_price * p.quantity
+        cost_value = p.avg_cost * p.quantity
+        profit = market_value - cost_value
+        profit_pct = profit / cost_value * 100 if cost_value > 0 else 0
+
+        output["positions"].append({
+            "stock_code": p.stock_code,
+            "stock_name": p.stock_name,
+            "quantity": p.quantity,
+            "avg_cost": p.avg_cost,
+            "current_price": p.current_price,
+            "market_value": market_value,
+            "profit": profit,
+            "profit_pct": profit_pct,
+            "realized_profit": p.realized_profit
+        })
+
+        total_value += market_value
+        total_cost += cost_value
+
+    total_profit = total_value - total_cost
+    total_profit_pct = total_profit / total_cost * 100 if total_cost > 0 else 0
+
+    output["summary"] = {
+        "total_market_value": total_value,
+        "total_cost": total_cost,
+        "total_profit": total_profit,
+        "total_profit_pct": total_profit_pct,
+        "count": len(positions)
+    }
+
+    output["concentration"] = {
+        "herfindahl_index": concentration.get('herfindahl_index', 0),
+        "top3_concentration": concentration.get('top3_concentration', 0)
+    }
+
+    return json.dumps(output, ensure_ascii=False, indent=2)
 
 
 def cmd_portfolio(args):
@@ -63,9 +115,19 @@ def cmd_portfolio(args):
             positions = ms.get_all_positions()
 
             if not positions:
-                print("当前无持仓")
+                if getattr(args, 'json', False):
+                    print(json.dumps({"positions": [], "summary": None, "concentration": None}, ensure_ascii=False, indent=2))
+                else:
+                    print("当前无持仓")
                 return
 
+            # JSON 输出
+            if getattr(args, 'json', False):
+                concentration = ms.get_concentration()
+                print(format_positions_json(positions, concentration))
+                return
+
+            # 文本输出
             print("\n═══════════════════════════════════════════════════════")
             print("  持仓列表")
             print("═══════════════════════════════════════════════════════\n")

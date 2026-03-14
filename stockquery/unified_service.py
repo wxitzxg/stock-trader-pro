@@ -177,7 +177,7 @@ class UnifiedStockQueryService:
         """
         搜索股票
 
-        路由策略：AKShare (唯一数据源)
+        路由策略：优先数据库缓存 → AKShare(备)
 
         Args:
             keyword: 搜索关键词
@@ -186,8 +186,6 @@ class UnifiedStockQueryService:
             匹配的股票列表
         """
         result = self.akshare.search_stock(keyword)
-        if result:
-            result['_source_used'] = 'akshare'
         return result
 
     def get_comprehensive_data(

@@ -7,6 +7,7 @@ from mystocks.models.position import Position, PositionLot
 from mystocks.models.transaction import Transaction
 from mystocks.models.watchlist import Watchlist
 from mystocks.models.kline import Kline
+from mystocks.models.stock_list import StockList
 
 __all__ = [
     'Base',
@@ -16,4 +17,5 @@ __all__ = [
     'Transaction',
     'Watchlist',
     'Kline',
+    'StockList',
 ]

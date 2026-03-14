@@ -3,21 +3,49 @@
 flow 命令 - 查看资金流向分析
 """
 
+import json
 from stockquery import UnifiedStockQueryService
+
+
+def format_flow_json(code: str, flow_data: dict) -> str:
+    """格式化资金流向数据为 JSON"""
+    if not flow_data or 'error' in flow_data:
+        return json.dumps({"error": "数据获取失败"}, ensure_ascii=False, indent=2)
+
+    summary = flow_data.get('summary', {})
+    if not summary:
+        return json.dumps({"code": code, "data": None, "message": "暂无资金流向数据"}, ensure_ascii=False, indent=2)
+
+    output = {
+        "code": code,
+        "date": summary.get('date', 'N/A'),
+        "data": {
+            "main_force_in": summary.get('main_force_in', 0) / 10000,
+            "big_order_in": summary.get('big_order_in', 0) / 10000,
+            "medium_order_in": summary.get('medium_order_in', 0) / 10000,
+            "small_order_in": summary.get('small_order_in', 0) / 10000
+        },
+        "sentiment": "bullish" if summary.get('main_force_in', 0) > 0 else "bearish"
+    }
+    return json.dumps(output, ensure_ascii=False, indent=2)
 
 
 def cmd_flow(args):
     """flow 命令处理 - 查看资金流向分析"""
     if not args.code:
-        print("Usage: python main.py flow <code>")
-        print("Example: python main.py flow 600519")
+        print("Usage: python3 main.py flow <code>")
+        print("Example: python3 main.py flow 600519")
         return
-
-    print(f"分析 {args.code} 资金流向...\n")
 
     stock_query = UnifiedStockQueryService()
     flow_data = stock_query.get_fund_flow(args.code)
 
+    # JSON 输出
+    if getattr(args, 'json', False):
+        print(format_flow_json(args.code, flow_data))
+        return
+
+    # 文本输出
     if 'error' in flow_data:
         print(f"获取失败：{flow_data['error']}")
         return

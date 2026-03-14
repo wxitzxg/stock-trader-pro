@@ -3,6 +3,7 @@
 export 命令 - 导出历史 K 线数据
 """
 
+from datetime import datetime, timedelta
 from stockquery import UnifiedStockQueryService
 import pandas as pd
 
@@ -20,9 +21,13 @@ def cmd_export(args):
 
     print(f"导出 {args.code} 最近{days}天 K 线数据...\n")
 
+    # 计算日期范围
+    end_date = datetime.now().strftime('%Y%m%d')
+    start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
+
     # 获取历史数据
     stock_query = UnifiedStockQueryService()
-    df = stock_query.get_historical_data(args.code, days=days)
+    df = stock_query.get_historical_data(args.code, start_date=start_date, end_date=end_date)
 
     if df is None or df.empty:
         print("获取历史数据失败")

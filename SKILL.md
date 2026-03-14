@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 **初始化默认数据库：**
 ```bash
-python main.py init-db
+python3 main.py init-db
 ```
 
 **输出示例：**
@@ -87,7 +87,7 @@ python main.py init-db
 ### 5. 验证安装
 
 ```bash
-python main.py --help
+python3 main.py --help
 ```
 
 ### 核心依赖
@@ -108,19 +108,19 @@ python main.py --help
 
 ```bash
 # 1. 查看帮助
-python main.py --help
+python3 main.py --help
 
 # 2. 分析股票（技术分析）
-python main.py analyze 600519 --full
+python3 main.py analyze 600519 --full
 
 # 3. 查询实时行情
-python main.py query 600519
+python3 main.py query 600519
 
 # 4. 查看持仓
-python main.py mystocks pos
+python3 main.py mystocks pos
 
 # 5. 启动智能监控
-python main.py smart-monitor
+python3 main.py smart-monitor
 ```
 
 ---
@@ -172,21 +172,21 @@ python main.py smart-monitor
 
 ```bash
 # 完整分析（所有策略）
-python main.py analyze 600519 --full
+python3 main.py analyze 600519 --full
 
 # 指定策略分析
-python main.py analyze 600519 --strategy vcp      # 仅 VCP
-python main.py analyze 600519 --strategy td       # 仅九转
-python main.py analyze 600519 --strategy divergence  # 仅背离
+python3 main.py analyze 600519 --strategy vcp      # 仅 VCP
+python3 main.py analyze 600519 --strategy td       # 仅九转
+python3 main.py analyze 600519 --strategy divergence  # 仅背离
 
 # JSON 格式输出（便于程序处理）
-python main.py analyze 600519 --json
+python3 main.py analyze 600519 --json
 
 # 分析收藏股列表
-python main.py analyze --watchlist
+python3 main.py analyze --watchlist
 
 # 自定义历史数据天数
-python main.py analyze 600519 --days 120
+python3 main.py analyze 600519 --days 120
 ```
 
 ### 返回数据格式
@@ -298,13 +298,13 @@ python main.py analyze 600519 --days 120
 
 ```bash
 # 仅分析 VCP 策略
-python main.py analyze 600519 --strategy vcp
+python3 main.py analyze 600519 --strategy vcp
 
 # 仅分析九转策略
-python main.py analyze 600519 --strategy td
+python3 main.py analyze 600519 --strategy td
 
 # 仅分析背离策略
-python main.py analyze 600519 --strategy divergence
+python3 main.py analyze 600519 --strategy divergence
 ```
 
 ### 返回数据格式
@@ -347,29 +347,33 @@ python main.py analyze 600519 --strategy divergence
 
 ```bash
 # 查询单只股票
-python main.py query 600519
+python3 main.py query 600519
 
 # 查询多只股票
-python main.py query 600519 000001 300760
+python3 main.py query 600519 000001 300760
 
 # 查询 ETF
-python main.py query 510300
+python3 main.py query 510300
 ```
 
 ### 返回数据格式
 
-**文本输出示例**:
-```
-⚪ 贵州茅台 (600519)
-  当前价：¥1688.00 (+3.25%)
-  今开：¥1650.00
-  最高：¥1695.00
-  最低：¥1645.00
-  昨收：¥1635.00
-  成交量：1,234,567
+**JSON 输出示例**:
+```json
+{
+  "symbol": "600519",
+  "name": "贵州茅台",
+  "price": 1688.00,
+  "change_pct": 3.25,
+  "open": 1650.00,
+  "high": 1695.00,
+  "low": 1645.00,
+  "close": 1635.00,
+  "volume": 1234567
+}
 ```
 
-> 注：emoji 根据涨跌幅动态变化（🔴上涨、⚪平盘、🟢下跌）
+> 注：所有行情查询命令统一输出 JSON 格式。
 
 ---
 
@@ -389,27 +393,25 @@ python main.py query 510300
 
 ```bash
 # 分析单只股票资金流向
-python main.py flow 600519
+python3 main.py flow 600519
 ```
 
 ### 返回数据格式
 
-**资金流向输出**:
+**JSON 输出示例**:
+```json
+{
+  "code": "600519",
+  "date": "2026-03-14",
+  "data": {
+    "main_force_in": 2300.00,
+    "big_order_in": 1500.00,
+    "medium_order_in": 500.00,
+    "small_order_in": 300.00
+  },
+  "sentiment": "bullish"
+}
 ```
-═══════════════════════════════════════════════════
-  600519 资金流向分析
-═══════════════════════════════════════════════════
-日期：2026-03-14
-
-主力净流入：¥+2300.00 万元
-├─ 大单净流入：¥+1500.00 万元
-├─ 中单净流入：¥+500.00 万元
-└─ 小单净流入：¥+300.00 万元
-═══════════════════════════════════════════════════
-💰 主力净流入 2300.00 万元，偏向多头
-```
-
-> 注：emoji 根据资金流向动态变化（💰净流入、💸净流出）
 
 ---
 
@@ -417,7 +419,7 @@ python main.py flow 600519
 
 ### 功能描述
 
-根据关键词搜索股票，支持按代码、名称、拼音首字母模糊匹配。
+根据关键词搜索股票，支持按代码、名称模糊匹配。使用本地数据库缓存，搜索速度快。
 
 ### 适用场景
 
@@ -429,25 +431,39 @@ python main.py flow 600519
 
 ```bash
 # 按名称搜索
-python main.py search 平安
+python3 main.py search 平安
 
 # 按代码搜索
-python main.py search 600
+python3 main.py search 600
+
+# 更新股票列表缓存（全量）
+python3 main.py update-stock-list --full
+
+# 更新股票列表缓存（增量）
+python3 main.py update-stock-list --incremental
 ```
 
 ### 返回数据格式
 
-**搜索结果输出**:
-```
-找到 5 只匹配股票:
-
-代码          名称              最新价      涨跌幅
---------------------------------------------------
-600000      浦发银行           8.50       +1.20%
-600015      华夏银行           6.80       -0.50%
-600016      民生银行           4.20       +0.80%
-000001      平安银行           12.30      +2.10%
-601318      中国平安           45.60      +1.50%
+**JSON 输出示例**:
+```json
+{
+  "results": [
+    {
+      "code": "600000",
+      "name": "浦发银行",
+      "price": 8.50,
+      "change_pct": 1.20
+    },
+    {
+      "code": "000001",
+      "name": "平安银行",
+      "price": 12.30,
+      "change_pct": 2.10
+    }
+  ],
+  "total": 2
+}
 ```
 
 ---
@@ -487,127 +503,150 @@ python main.py search 600
 
 ```bash
 # 启动智能调度器（持续运行）
-python main.py smart-monitor
+python3 main.py smart-monitor
 
 # 执行一次监控
-python main.py smart-monitor --once
+python3 main.py smart-monitor --once
 
 # 指定报告输出目录
-python main.py smart-monitor --output-dir ./reports
+python3 main.py smart-monitor --output-dir ./reports
 
 # 自定义监控间隔（秒）
-python main.py smart-monitor --interval 180
+python3 main.py smart-monitor --interval 180
 
 # 导出 Markdown 报告
-python main.py monitor --output report.md
+python3 main.py monitor --output report.md
 
 # 只监控持仓股
-python main.py monitor --no-watchlist
+python3 main.py monitor --no-watchlist
 
 # 只监控收藏股
-python main.py monitor --no-position
+python3 main.py monitor --no-position
 
 # 执行一次预警检查（仅收藏股）
-python main.py alert
+python3 main.py alert
+
+# 定时更新持仓价格（后台运行）
+python3 main.py update-prices
+
+# 定时更新持仓价格（只执行一次）
+python3 main.py update-prices --once
+
+# 定时更新持仓价格（指定股票）
+python3 main.py update-prices --once --stock-code 600519
+
+# 定时更新 K 线数据（后台运行）
+python3 main.py update-kline
+
+# 定时更新 K 线数据（只执行一次）
+python3 main.py update-kline --once
+
+# 定时更新 K 线数据（指定股票）
+python3 main.py update-kline --once --stock-code 600519
 ```
 
 ### 返回数据格式
 
-**控制台输出示例** (`smart-monitor`, `monitor`):
+**JSON 输出示例** (`smart-monitor --json`, `monitor --json`, `alert --json`):
 
 无预警时:
-```
-2026-03-14 11:54:20 - 执行监控预警...
-🔍 开始监控...
-
-📊 持仓股：5 只
-🏷️ 收藏股：4 只
-
-============================================================
-📊 监控报告
-============================================================
-# 📊 A 股智能监控预警报告
-
-> **生成时间**: 2026-03-14 11:54:20
-> **市场状态**: 盘后
-> **监控模式**: 仅交易日交易时段预警
-
----
-
-## 📈 汇总统计
-
-| 项目 | 持仓股 | 收藏股 |
-|------|--------|--------|
-| 数量 | 5 只 | 4 只 |
-| 预警数 | 0 条 | 0 条 |
-
----
-
-暂无预警
+```json
+{
+  "report_time": "2026-03-14 11:54:20",
+  "market_status": "盘后",
+  "summary": {
+    "position_count": 5,
+    "watchlist_count": 4,
+    "total_alerts": 0,
+    "high_alerts": 0,
+    "medium_alerts": 0,
+    "low_alerts": 0
+  },
+  "positions": [],
+  "watchlist": []
+}
 ```
 
 有预警时:
+```json
+{
+  "report_time": "2026-03-14 11:54:20",
+  "market_status": "交易时间",
+  "summary": {
+    "position_count": 5,
+    "watchlist_count": 4,
+    "total_alerts": 2,
+    "high_alerts": 2,
+    "medium_alerts": 0,
+    "low_alerts": 0
+  },
+  "positions": [
+    {
+      "stock_code": "000858",
+      "stock_name": "五粮液",
+      "quantity": 100,
+      "avg_cost": 180.00,
+      "current_price": 145.20,
+      "profit_loss": -3480.00,
+      "profit_rate": -19.33,
+      "market_value": 14520.00,
+      "alerts": [
+        {
+          "stock_code": "000858",
+          "stock_name": "五粮液",
+          "alert_type": "cost_below",
+          "alert_level": "高危",
+          "message": "亏损 12%",
+          "weight": 3
+        }
+      ],
+      "rule_details": [
+        {
+          "rule_name": "cost_below",
+          "rule_type": "成本规则",
+          "triggered": true,
+          "threshold": "<=-12.0%",
+          "current_value": "-19.3%",
+          "message": "亏损 19.3%"
+        }
+      ]
+    }
+  ],
+  "watchlist": []
+}
 ```
-## 🚨 预警信息汇总
 
-### 🔴 高危预警
-- **五粮液 (000858)**: 🛑 亏损 12% (止损价¥145.20)
-- **迈瑞医疗 (300760)**: 🛑 亏损 12% (止损价¥246.84)
-
----
-
-## 📋 预警规则详情
-
-### 已触发规则
-
-| 股票 | 规则类型 | 规则名称 | 阈值 | 当前值 | 状态 |
-|------|----------|----------|------|--------|------|
-| 五粮液 (000858) | 成本规则 | cost_below | <=-12.0% | -37.6% | 🔴 |
-| 迈瑞医疗 (300760) | 成本规则 | cost_below | <=-12.0% | -36.3% | 🔴 |
+**预警检查输出** (`alert --json`):
+```json
+{
+  "watchlist_count": 4,
+  "alert_count": 2,
+  "alerts": [
+    {
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "price": 1688.00,
+      "change_pct": 3.25,
+      "alert_type": "cost_above",
+      "alert_level": "高危",
+      "message": "盈利 18.5%",
+      "weight": 3
+    },
+    {
+      "stock_code": "300760",
+      "stock_name": "迈瑞医疗",
+      "price": 285.00,
+      "change_pct": 1.20,
+      "alert_type": "pct_up",
+      "alert_level": "警告",
+      "message": "日内大涨 4.5%",
+      "weight": 2
+    }
+  ]
+}
 ```
 
-> 注：smart-monitor 输出 Markdown 格式报告到控制台，包含汇总统计、预警信息、规则详情三个部分。
-
-**预警检查输出** (`alert`):
-```
-智能监控 4 只收藏股...
-
-============================================================
-触发 2 条预警:
-============================================================
-600519 - 贵州茅台 @ ¥1688.00 (+3.25%)
-  🔴 成本盈利 +18.5% (阈值 15%)
-  🟡 RSI 超买 78 (阈值 70)
-----------------------------------------
-300760 - 迈瑞医疗 @ ¥285.00 (+1.20%)
-  🟡 日内大涨 4.5% (阈值 4%)
-----------------------------------------
-
-暂无预警
-```
-
-> 注：无预警时显示"暂无预警"，有预警时显示详细预警列表。
-
-**Markdown 报告**（`--output` 参数生成）:
-```markdown
-# 智能监控报告
-
-生成时间：2026-03-14 10:30:00
-
-## 预警汇总
-| 级别 | 数量 |
-|------|------|
-| 🔴 高危 | 1 |
-| 🟡 警告 | 2 |
-| 🔵 提示 | 3 |
-
-## 预警规则详情
-| 规则 | 阈值 | 状态 |
-|------|------|------|
-| 成本盈利 | 15% | 已触发 |
-| 成本亏损 | -12% | 正常 |
-| ... | ... | ... |
-```
+> 注：所有监控预警命令统一输出 JSON 格式，包含汇总统计、持仓股详情、收藏股详情、预警规则详情。
 
 ---
 
@@ -634,115 +673,129 @@ python main.py alert
 
 ```bash
 # 查看持仓
-python main.py mystocks pos
+python3 main.py mystocks pos
 
 # 买入股票
-python main.py mystocks buy 600519 --qty 100 --price 1500 --name 贵州茅台
+python3 main.py mystocks buy 600519 --qty 100 --price 1500 --name 贵州茅台
 
 # 卖出股票
-python main.py mystocks sell 600519 --qty 50 --price 1600
+python3 main.py mystocks sell 600519 --qty 50 --price 1600
 
 # 资产汇总
-python main.py mystocks summary
+python3 main.py mystocks summary
 
 # 交易历史
-python main.py mystocks history --limit 50
+python3 main.py mystocks history --limit 50
 
 # 账户总览
-python main.py account --summary
+python3 main.py account --summary
 
 # 持仓详情（含仓位比）
-python main.py holdings --refresh
+python3 main.py holdings --refresh
 
 # 初始化持仓（从文件导入）
-python main.py init-position --file positions.json
-python main.py init-position --code 600519 --qty 100 --cost 1500 --name 贵州茅台
+python3 main.py init-position --file positions.json
+python3 main.py init-position --code 600519 --qty 100 --cost 1500 --name 贵州茅台
 
 # 存入现金
-python main.py account --deposit 100000
+python3 main.py account --deposit 100000
 
 # 取出现金
-python main.py account --withdraw 50000
+python3 main.py account --withdraw 50000
+
+# 直接使用 mystocks 模块（备用方式）
+python3 -m mystocks pos           # 查看持仓
+python3 -m mystocks buy 600519 --qty 100 --price 1500 --name 贵州茅台  # 买入
+python3 -m mystocks sell 600519 --qty 50 --price 1600  # 卖出
+python3 -m mystocks summary       # 资产汇总
+python3 -m mystocks history --limit 50  # 交易历史
+python3 -m mystocks init --code 600519 --qty 100 --cost 1500 --name 贵州茅台  # 初始化持仓
+python3 -m mystocks update-prices --once  # 更新持仓价格
 ```
 
 ### 返回数据格式
 
-**持仓列表输出** (`mystocks pos`):
-```
-═══════════════════════════════════════════════════
-  持仓列表
-═══════════════════════════════════════════════════
-
-📌 600519 (贵州茅台)
-   持仓：100 股
-   成本价：¥1500.48
-   当前价：¥1688.00
-   市值：¥168,800.00
-   盈亏：¥+18,752.00 (+12.5%)
-   实现盈亏：¥+0.00
-
-───────────────────────────────────────────────────
-合计 市值：¥168,800.00
-合计 成本：¥150,048.00
-合计 盈亏：¥+18,752.00 (+12.5%)
-持仓数量：1 只
-
-持仓集中度 (HHI): 1.000
-前三大持仓占比：100.0%
-```
-
-**资产汇总输出** (`mystocks summary`):
-```
-═══════════════════════════════════════════════════
-  资产汇总
-═══════════════════════════════════════════════════
-
-💰 总市值：¥168,800.00
-📊 总成本：¥150,048.00
-📈 浮动盈亏：¥+18,752.00 (+12.5%)
-💵 已实现盈亏：¥+0.00
-📦 持仓数量：1 只
-
-───────────────────────────────────────────────────
-持仓集中度 (HHI): 1.000
-前三大持仓占比：100.0%
-最大单一持仓：100.0%
+**JSON 输出示例** (`mystocks pos --json`):
+```json
+{
+  "positions": [
+    {
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "quantity": 100,
+      "avg_cost": 1500.48,
+      "current_price": 1688.00,
+      "profit_loss": 18752.00,
+      "profit_rate": 12.5,
+      "market_value": 168800.00
+    }
+  ],
+  "summary": {
+    "total_market_value": 168800.00,
+    "total_cost": 150048.00,
+    "total_profit": 18752.00,
+    "profit_rate": 12.5,
+    "count": 1
+  },
+  "concentration": {
+    "herfindahl_index": 1.000,
+    "top3_concentration": 100.0
+  }
+}
 ```
 
-**账户总览输出** (`account --summary`):
-```
-账户总览
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-账户名称：默认账户
-现金余额：¥50,000.00
-持仓市值：¥168,800.00
-总资产：¥218,800.00
-仓位比：77.15%
-浮动盈亏：¥+18,752.00 (12.50%)
-已实现盈亏：¥+0.00
-总盈亏：¥+18,752.00
-累计投入：¥200,048.00
-```
-
-**持仓详情输出** (`holdings --refresh`):
-
-有持仓时:
-```
-🔄 正在更新最新股价...
-✅ 股价更新完成
-持仓详情
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-股票名称    数量   现价     市值       成本     盈亏       盈亏比    仓位比
-贵州茅台    100   ¥1688   ¥168,800   ¥1500   ¥+18,800   12.53%   77.15%
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-合计：总市值 ¥168,800 / 总成本 ¥150,000 / 总盈亏 ¥+18,800
+**资产汇总输出** (`mystocks summary --json`):
+```json
+{
+  "total_market_value": 168800.00,
+  "total_cost": 150048.00,
+  "floating_profit": 18752.00,
+  "floating_profit_rate": 12.5,
+  "position_count": 1,
+  "concentration": {
+    "herfindahl_index": 1.000,
+    "top3_concentration": 100.0
+  }
+}
 ```
 
-无持仓时:
+**账户总览输出** (`account --summary --json`):
+```json
+{
+  "account_name": "默认账户",
+  "cash_balance": 50000.00,
+  "market_value": 168800.00,
+  "total_assets": 218800.00,
+  "position_ratio": 77.15,
+  "floating_profit": 18752.00,
+  "floating_profit_rate": 12.50,
+  "realized_profit": 0.00,
+  "total_profit": 18752.00,
+  "total_invested": 200048.00
+}
 ```
-🔄 正在更新最新股价...
-✅ 股价更新完成
-当前无持仓
+
+**持仓详情输出** (`holdings --refresh --json`):
+```json
+{
+  "holdings": [
+    {
+      "stock_name": "贵州茅台",
+      "quantity": 100,
+      "current_price": 1688.00,
+      "market_value": 168800.00,
+      "avg_cost": 1500.00,
+      "profit_loss": 18800.00,
+      "profit_rate": 12.53,
+      "position_ratio": 77.15
+    }
+  ],
+  "summary": {
+    "total_market_value": 168800.00,
+    "total_cost": 150000.00,
+    "total_profit": 18800.00
+  }
+}
 ```
 
 ---
@@ -763,36 +816,43 @@ python main.py account --withdraw 50000
 
 ```bash
 # 查看收藏列表
-python main.py mystocks watch --list
-python main.py watchlist --list
+python3 main.py watchlist --list
 
 # 添加收藏
-python main.py mystocks watch --add 600519 --name 贵州茅台 --tags "白酒，龙头"
+python3 main.py watchlist --add 600519 --name 贵州茅台 --tags "白酒，龙头"
 
 # 设置目标价和止损价
-python main.py mystocks watch --add 600519 --target 1800 --stop-loss 1400
+python3 main.py watchlist --add 600519 --target 1800 --stop-loss 1400
 
 # 删除收藏
-python main.py mystocks watch --remove 600519
+python3 main.py watchlist --remove 600519
 ```
 
 ### 返回数据格式
 
-**收藏列表输出**:
-```
-═══════════════════════════════════════════════════
-  收藏股列表
-═══════════════════════════════════════════════════
-
-📌 600519 (贵州茅台)
-   标签：白酒，龙头
-   目标价：¥1800.00
-   止损价：¥1400.00
-
-📌 300760 (迈瑞医疗)
-   标签：医疗器械
-
-共 2 只股票
+**JSON 输出示例** (`watchlist --list --json`):
+```json
+{
+  "watchlist": [
+    {
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "tags": "白酒，龙头",
+      "target_price": 1800.00,
+      "stop_loss": 1400.00,
+      "notes": "高端白酒龙头"
+    },
+    {
+      "stock_code": "300760",
+      "stock_name": "迈瑞医疗",
+      "tags": "医疗器械",
+      "target_price": 320.00,
+      "stop_loss": 250.00,
+      "notes": ""
+    }
+  ],
+  "total": 2
+}
 ```
 
 ---
@@ -813,33 +873,35 @@ python main.py mystocks watch --remove 600519
 
 ```bash
 # 行业板块排行
-python main.py sector
+python3 main.py sector
 
 # 概念板块排行
-python main.py sector --concept
+python3 main.py sector --concept
 
 # 地域板块排行
-python main.py sector --region
+python3 main.py sector --region
 
 # 指定返回数量
-python main.py sector --limit 20
+python3 main.py sector --limit 20
 ```
 
 ### 返回数据格式
 
-**板块排行输出**:
-```
-🔴 白酒行业
-  涨跌幅：+5.23%
-  上涨：15
-  下跌：3
-  领涨股：贵州茅台 (+6.8%)
-
-🟢 医疗器械
-  涨跌幅：-1.25%
-  上涨：5
-  下跌：10
-  领涨股：迈瑞医疗 (+2.1%)
+**JSON 输出示例** (`sector --json`):
+```json
+{
+  "sectors": [
+    {
+      "name": "白酒行业",
+      "change_pct": 5.23,
+      "up_count": 15,
+      "down_count": 3,
+      "top_stock": "贵州茅台",
+      "top_stock_change": 6.8
+    }
+  ],
+  "total": 1
+}
 ```
 
 ---
@@ -860,16 +922,16 @@ python main.py sector --limit 20
 
 ```bash
 # 导出 CSV 格式（默认 60 天）
-python main.py export 600519
+python3 main.py export 600519
 
 # 导出 JSON 格式
-python main.py export 600519 --format json
+python3 main.py export 600519 --format json
 
 # 指定获取天数
-python main.py export 600519 --days 120
+python3 main.py export 600519 --days 120
 
 # 指定输出文件
-python main.py export 600519 -o custom_output.csv
+python3 main.py export 600519 -o custom_output.csv
 ```
 
 ### 返回数据格式
@@ -910,20 +972,20 @@ date,open,high,low,close,volume,amount
 
 ```bash
 # 列出所有配置了参数的股票
-python main.py params list
+python3 main.py params list
 
 # 获取某股票的参数配置
-python main.py params get --symbol 600519
+python3 main.py params get --symbol 600519
 
 # 设置股票参数
-python main.py params set --symbol 600519 --name 贵州茅台 \
+python3 main.py params set --symbol 600519 --name 贵州茅台 \
   --params "vcp.min_drops=3,zigzag.threshold=0.08,td.period=9"
 
 # 查看默认参数
-python main.py params defaults
+python3 main.py params defaults
 
 # 删除股票参数配置（恢复默认）
-python main.py params remove --symbol 600519
+python3 main.py params remove --symbol 600519
 ```
 
 **支持的参数类型**:

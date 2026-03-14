@@ -35,12 +35,13 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 
-def run_monitor_task(output_dir: str = None):
+def run_monitor_task(output_dir: str = None, json_output: bool = False):
     """
     执行监控任务（一次性执行）
 
     Args:
         output_dir: 报告输出目录
+        json_output: 是否输出 JSON 格式
     """
     logger.info("执行监控预警...")
 
@@ -51,6 +52,7 @@ def run_monitor_task(output_dir: str = None):
     monitor_args.output = None
     monitor_args.no_position = False
     monitor_args.no_watchlist = False
+    monitor_args.json = json_output
 
     # 如果指定了输出目录，生成报告文件
     if output_dir:
@@ -58,7 +60,8 @@ def run_monitor_task(output_dir: str = None):
         output_path.mkdir(parents=True, exist_ok=True)
         import time
         timestamp = time.strftime("%Y%m%d_%H%M%S")
-        monitor_args.output = str(output_path / f"monitor_{timestamp}.md")
+        ext = "json" if json_output else "md"
+        monitor_args.output = str(output_path / f"monitor_{timestamp}.{ext}")
 
     # 执行监控
     cmd_monitor(monitor_args)
@@ -72,7 +75,8 @@ def run_once(args):
         args: 命令行参数
     """
     output_dir = getattr(args, 'output_dir', None)
-    run_monitor_task(output_dir)
+    json_output = getattr(args, 'json', False)
+    run_monitor_task(output_dir, json_output)
 
 
 def run_continuous(args):
@@ -89,6 +93,7 @@ def run_continuous(args):
         "interval_market", 300
     )
     output_dir = getattr(args, 'output_dir', None)
+    json_output = getattr(args, 'json', False)
 
     logger.info(f"启动监控预警调度器 - 检查间隔：{interval}秒")
     logger.info("监控策略：仅在交易日交易时段执行")
@@ -96,13 +101,18 @@ def run_continuous(args):
         logger.info(f"报告输出目录：{output_dir}")
     else:
         logger.info("报告输出：控制台")
+    if json_output:
+        logger.info("输出格式：JSON")
+    else:
+        logger.info("输出格式：Markdown")
     logger.info("按 Ctrl+C 停止监控")
 
     # 创建调度器
     _scheduler = create_scheduler(
         monitor_func=run_monitor_task,
         output_dir=output_dir,
-        interval=interval
+        interval=interval,
+        json_output=json_output
     )
 
     # 注册信号处理
@@ -150,6 +160,11 @@ def setup_parser(parser: argparse.ArgumentParser):
         '--output-dir',
         type=str,
         help='报告输出目录'
+    )
+    parser.add_argument(
+        '--json',
+        action='store_true',
+        help='JSON 格式输出'
     )
     parser.add_argument(
         '--log',

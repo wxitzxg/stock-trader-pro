@@ -137,10 +137,8 @@ def format_analysis_report(result: dict) -> str:
 
 def cmd_analyze(args):
     """analyze 命令处理"""
-    import sys
-    sys.path.insert(0, '/home/zxg/.openclaw/workspace/felix/skills/stock-trader-pro')
     from mystocks.storage.database import get_db
-    from mystocks.services import WatchlistManager
+    from mystocks.services.watchlist_service import WatchlistService
 
     if args.watchlist:
         # 分析收藏股列表
@@ -163,13 +161,13 @@ def cmd_analyze(args):
 def analyze_watchlist(args):
     """分析收藏股列表"""
     from mystocks.storage.database import get_db
-    from mystocks.services import WatchlistManager
+    from mystocks.services.watchlist_service import WatchlistService
 
     db = get_db()
     db.init_db()
     session = db.get_session()
 
-    watchlist_mgr = WatchlistManager(session)
+    watchlist_mgr = WatchlistService(session)
     watchlist_stocks = watchlist_mgr.get_all()
 
     if not watchlist_stocks:

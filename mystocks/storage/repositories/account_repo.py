@@ -23,6 +23,22 @@ class AccountRepository(BaseRepository):
             Account.is_default == True
         ).first()
 
+    def get_or_create_default(self) -> Account:
+        """获取或创建默认账户"""
+        account = self.get_default()
+        if account:
+            return account
+
+        # 创建默认账户
+        account = Account(
+            name="默认账户",
+            cash_balance=0.0,
+            total_invested=0.0,
+            total_realized_pnl=0.0,
+            is_default=True
+        )
+        return self.add(account)
+
     def get_all(self) -> List[Account]:
         """获取所有账户"""
         return self.session.query(Account).order_by(Account.id).all()

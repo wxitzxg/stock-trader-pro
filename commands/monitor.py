@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 monitor 命令 - 智能监控预警
-监控持仓股和收藏股，生成 Markdown 格式报告
+监控持仓股和收藏股，生成 JSON 格式报告
 """
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -320,9 +321,91 @@ def generate_rule_details(
     return rule_details
 
 
+def format_monitor_json(
+    position_stocks: list,
+    watchlist_stocks: list,
+    market_status: str,
+    report_time: str
+) -> str:
+    """格式化监控报告为 JSON"""
+
+    def convert_alert(alert: StockAlert) -> dict:
+        return {
+            "stock_code": alert.stock_code,
+            "stock_name": alert.stock_name,
+            "alert_type": alert.alert_type,
+            "alert_level": alert.alert_level,
+            "message": alert.message,
+            "weight": alert.weight
+        }
+
+    def convert_rule_detail(rule: RuleDetail) -> dict:
+        return {
+            "rule_name": rule.rule_name,
+            "rule_type": rule.rule_type,
+            "triggered": rule.triggered,
+            "threshold": rule.threshold,
+            "current_value": rule.current_value,
+            "message": rule.message
+        }
+
+    # 持仓股数据
+    positions = []
+    for p in position_stocks:
+        positions.append({
+            "stock_code": p.stock_code,
+            "stock_name": p.stock_name,
+            "quantity": p.quantity,
+            "avg_cost": p.avg_cost,
+            "current_price": p.current_price,
+            "profit_loss": p.profit_loss,
+            "profit_rate": p.profit_rate,
+            "market_value": p.current_price * p.quantity,
+            "alerts": [convert_alert(a) for a in p.alerts],
+            "rule_details": [convert_rule_detail(r) for r in (p.rule_details or [])]
+        })
+
+    # 收藏股数据
+    watchlist = []
+    for w in watchlist_stocks:
+        watchlist.append({
+            "stock_code": w.stock_code,
+            "stock_name": w.stock_name,
+            "current_price": w.current_price,
+            "change_pct": w.change_pct,
+            "tags": w.tags,
+            "target_price": w.target_price,
+            "stop_loss": w.stop_loss,
+            "alerts": [convert_alert(a) for a in w.alerts],
+            "rule_details": [convert_rule_detail(r) for r in (w.rule_details or [])]
+        })
+
+    # 汇总统计
+    total_alerts = sum(len(p.alerts) for p in positions) + sum(len(w.alerts) for w in watchlist)
+    high_alerts = [a for a in (alerts for p in positions for alerts in p.alerts) if a.alert_level == "高危"]
+    medium_alerts = [a for a in (alerts for p in positions for alerts in p.alerts) if a.alert_level == "警告"]
+    low_alerts = [a for a in (alerts for p in positions for alerts in p.alerts) if a.alert_level == "提示"]
+
+    output = {
+        "report_time": report_time,
+        "market_status": market_status,
+        "summary": {
+            "position_count": len(positions),
+            "watchlist_count": len(watchlist),
+            "total_alerts": total_alerts,
+            "high_alerts": len(high_alerts),
+            "medium_alerts": len(medium_alerts),
+            "low_alerts": len(low_alerts)
+        },
+        "positions": positions,
+        "watchlist": watchlist
+    }
+
+    return json.dumps(output, ensure_ascii=False, indent=2)
+
+
 def cmd_monitor(args):
     """monitor 命令处理 - 智能监控预警"""
-    print("🔍 开始监控...\n")
 
     # 初始化服务
     with MyStocks() as ms:
@@ -335,14 +418,15 @@ def cmd_monitor(args):
 
         # 获取持仓股
         positions = ms.get_all_positions()
-        print(f"📊 持仓股：{len(positions)} 只")
 
         # 获取收藏股
         watchlist = ms.get_watchlist()
-        print(f"🏷️ 收藏股：{len(watchlist)} 只")
 
         if not positions and not watchlist:
-            print("⚠️ 持仓股和收藏股均为空，无法监控")
+            if getattr(args, 'json', False):
+                print(json.dumps({"error": "持仓股和收藏股均为空"}, ensure_ascii=False, indent=2))
+            else:
+                print("⚠️ 持仓股和收藏股均为空，无法监控")
             return
 
         # 监控持仓股
@@ -443,6 +527,31 @@ def cmd_monitor(args):
 
         # 确定市场状态
         market_status = "交易时间" if is_market_hours() else "盘后"
+        report_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # JSON 输出
+        if getattr(args, 'json', False):
+            json_output = format_monitor_json(
+                position_stocks=position_stocks,
+                watchlist_stocks=watchlist_stocks,
+                market_status=market_status,
+                report_time=report_time
+            )
+
+            if hasattr(args, 'output') and args.output:
+                output_path = Path(args.output)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(json_output)
+                print(f"✅ 报告已导出到：{output_path}")
+            else:
+                print(json_output)
+            return
+
+        # 文本输出
+        print("🔍 开始监控...\n")
+        print(f"📊 持仓股：{len(positions)} 只")
+        print(f"🏷️ 收藏股：{len(watchlist)} 只")
 
         # 生成报告
         report = report_generator.generate_full_report(
@@ -503,9 +612,10 @@ def is_market_hours() -> bool:
 
 def setup_parser(parser: argparse.ArgumentParser):
     """设置命令行参数"""
-    parser.add_argument('--output', '-o', help='输出文件路径（Markdown 格式）')
+    parser.add_argument('--output', '-o', help='输出文件路径')
     parser.add_argument('--no-position', action='store_true', help='不监控持仓股')
     parser.add_argument('--no-watchlist', action='store_true', help='不监控收藏股')
+    parser.add_argument('--json', action='store_true', help='JSON 格式输出')
 
 
 def main():

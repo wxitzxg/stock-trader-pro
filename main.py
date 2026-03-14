@@ -27,6 +27,7 @@ from commands import (
     cmd_update_prices,
     cmd_update_kline,
     cmd_smart_monitor,
+    cmd_update_stock_list,
 )
 from mystocks.storage.database import init_database
 
@@ -143,11 +144,13 @@ Examples:
     account_parser.add_argument('--summary', action='store_true', help='显示账户总览')
     account_parser.add_argument('--deposit', type=float, help='存入现金')
     account_parser.add_argument('--withdraw', type=float, help='取出现金')
+    account_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     account_parser.set_defaults(func=cmd_account)
 
     # holdings 命令 - 持仓详情
     holdings_parser = subparsers.add_parser('holdings', help='持仓详情（含仓位比）')
     holdings_parser.add_argument('--refresh', action='store_true', help='刷新最新股价')
+    holdings_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     holdings_parser.set_defaults(func=cmd_holdings)
 
     # watchlist 命令 - 使用新的 mystocks 模块
@@ -160,7 +163,22 @@ Examples:
     watchlist_parser.add_argument('--notes', help='备注')
     watchlist_parser.add_argument('--target', type=float, help='目标价')
     watchlist_parser.add_argument('--stop-loss', type=float, help='止损价')
+    watchlist_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     watchlist_parser.set_defaults(func=cmd_watchlist)
+
+    # portfolio 命令 - 使用新的 mystocks 模块
+    portfolio_parser = subparsers.add_parser('portfolio', help='持仓管理')
+    portfolio_parser.add_argument('--list', action='store_true', help='查看持仓')
+    portfolio_parser.add_argument('--buy', action='store_true', help='买入')
+    portfolio_parser.add_argument('--sell', action='store_true', help='卖出')
+    portfolio_parser.add_argument('--symbol', help='股票代码')
+    portfolio_parser.add_argument('--qty', type=int, help='股数')
+    portfolio_parser.add_argument('--price', type=float, help='成交价')
+    portfolio_parser.add_argument('--name', help='股票名称')
+    portfolio_parser.add_argument('--notes', help='备注')
+    portfolio_parser.add_argument('--all', action='store_true', help='清仓（卖出全部）')
+    portfolio_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
+    portfolio_parser.set_defaults(func=cmd_portfolio)
 
     # mystocks 命令 - 新的综合资产管理
     mystocks_parser = subparsers.add_parser('mystocks', help='我的股票 (综合资产管理)')
@@ -178,9 +196,10 @@ Examples:
 
     # monitor 命令 - 监控持仓股和收藏股
     monitor_parser = subparsers.add_parser('monitor', help='监控持仓股和收藏股信号')
-    monitor_parser.add_argument('--output', '-o', help='输出文件路径（Markdown 格式）')
+    monitor_parser.add_argument('--output', '-o', help='输出文件路径')
     monitor_parser.add_argument('--no-position', action='store_true', help='不监控持仓股')
     monitor_parser.add_argument('--no-watchlist', action='store_true', help='不监控收藏股')
+    monitor_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     monitor_parser.set_defaults(func=cmd_monitor)
 
     # ========== stock-pro 整合命令 ==========
@@ -188,6 +207,7 @@ Examples:
     # query 命令 - 查询实时行情
     query_parser = subparsers.add_parser('query', help='查询股票实时行情 (新浪 API)')
     query_parser.add_argument('codes', nargs='*', help='股票代码列表')
+    query_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     query_parser.set_defaults(func=cmd_query)
 
     # sector 命令 - 板块排行
@@ -196,16 +216,19 @@ Examples:
     sector_parser.add_argument('--concept', action='store_true', help='概念板块')
     sector_parser.add_argument('--region', action='store_true', help='地域板块')
     sector_parser.add_argument('--limit', type=int, default=50, help='返回数量')
+    sector_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     sector_parser.set_defaults(func=cmd_sector)
 
     # flow 命令 - 资金流向
     flow_parser = subparsers.add_parser('flow', help='查看资金流向分析 (AKShare)')
     flow_parser.add_argument('code', help='股票代码')
+    flow_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     flow_parser.set_defaults(func=cmd_flow)
 
     # search 命令 - 股票搜索
     search_parser = subparsers.add_parser('search', help='搜索股票 (AKShare)')
     search_parser.add_argument('keyword', help='搜索关键词 (代码或名称)')
+    search_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     search_parser.set_defaults(func=cmd_search)
 
     # export 命令 - 数据导出
@@ -238,6 +261,7 @@ Examples:
 
     # alert 命令 - 执行一次预警检查
     alert_parser = subparsers.add_parser('alert', help='执行一次智能预警检查')
+    alert_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     alert_parser.set_defaults(func=cmd_alert)
 
     # params 命令 - 管理股票策略参数
@@ -270,7 +294,14 @@ Examples:
     smart_monitor_parser.add_argument('--once', action='store_true', help='只执行一次监控')
     smart_monitor_parser.add_argument('--interval', type=int, default=None, help='监控间隔（秒）')
     smart_monitor_parser.add_argument('--output-dir', type=str, help='报告输出目录')
+    smart_monitor_parser.add_argument('--json', action='store_true', help='JSON 格式输出')
     smart_monitor_parser.set_defaults(func=cmd_smart_monitor)
+
+    # update-stock-list 命令 - 股票列表缓存更新
+    update_stock_list_parser = subparsers.add_parser('update-stock-list', help='更新 A 股股票列表缓存')
+    update_stock_list_parser.add_argument('--full', action='store_true', help='全量更新（获取所有股票）')
+    update_stock_list_parser.add_argument('--incremental', action='store_true', help='增量更新（仅更新已有股票）')
+    update_stock_list_parser.set_defaults(func=cmd_update_stock_list)
 
     args = parser.parse_args()
 
