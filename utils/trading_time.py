@@ -10,7 +10,7 @@ A 股交易时间规则:
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Any
 
-from config.trading_calendar import get_holidays, get_makeup_workdays
+from config import get_holidays, get_makeup_workdays
 
 
 class TradingTimeUtils:

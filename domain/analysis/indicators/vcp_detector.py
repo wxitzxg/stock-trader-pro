@@ -13,7 +13,7 @@ VCP 特征:
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
-from config.params_loader import StockParamsLoader
+from config import get_config
 
 
 class VCPDetector:
@@ -41,8 +41,8 @@ class VCPDetector:
         self.symbol = symbol
 
         # Load per-stock parameters
-        self._params_loader = StockParamsLoader() if symbol else None
-        vcp_params = self._params_loader.get_vcp_params(symbol) if symbol else {}
+        self._config = get_config() if symbol else None
+        vcp_params = self._config.get_vcp_params(symbol) if symbol else {}
 
         # Allow constructor args to override config
         self.min_drops = min_drops if min_drops is not None else vcp_params.get('min_drops', 2)

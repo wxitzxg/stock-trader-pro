@@ -23,7 +23,7 @@ from datetime import datetime
 
 from domain.analysis.indicators.base_indicators import BaseIndicators
 from domain.analysis.indicators.vcp_detector import VCPDetector
-from config.settings import STRATEGY_PARAMS, POSITION_PARAMS
+from config import STRATEGY_PARAMS, POSITION_PARAMS
 
 
 class VCPBreakoutStrategy:

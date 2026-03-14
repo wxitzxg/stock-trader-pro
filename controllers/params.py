@@ -5,28 +5,28 @@ params 命令 - 管理股票策略参数
 """
 
 import json
-from config.params_loader import StockParamsLoader
+from config import get_config
 
 
 def cmd_params(args):
     """params 命令处理"""
-    loader = StockParamsLoader()
+    config = get_config()
 
     if args.action == 'list':
-        _cmd_list(loader)
+        _cmd_list(config)
     elif args.action == 'get':
-        _cmd_get(loader, args.symbol)
+        _cmd_get(config, args.symbol)
     elif args.action == 'set':
-        _cmd_set(loader, args)
+        _cmd_set(config, args)
     elif args.action == 'remove':
-        _cmd_remove(loader, args.symbol)
+        _cmd_remove(config, args.symbol)
     elif args.action == 'defaults':
-        _cmd_defaults(loader)
+        _cmd_defaults(config)
 
 
-def _cmd_list(loader):
+def _cmd_list(config):
     """列出所有配置了参数的股票"""
-    stocks = loader.list_all_stocks()
+    stocks = config.list_all_stocks()
     if not stocks:
         print("暂无配置股票特定参数")
         print("\n使用以下命令添加股票参数:")
@@ -35,22 +35,22 @@ def _cmd_list(loader):
 
     print(f"已配置 {len(stocks)} 只股票:\n")
     for symbol in stocks:
-        params = loader.get_stock_info(symbol)
-        name = params.get('name', 'Unknown')
-        notes = params.get('notes', '')
+        params = config.get_stock_info(symbol)
+        name = params.get('name', 'Unknown') if params else 'Unknown'
+        notes = params.get('notes', '') if params else ''
         print(f"  {symbol} - {name}")
         if notes:
             print(f"    备注：{notes}")
 
 
-def _cmd_get(loader, symbol):
+def _cmd_get(config, symbol):
     """获取股票参数"""
     if not symbol:
         print("错误：请指定股票代码")
         print("用法：python main.py params get --symbol 600519")
         return
 
-    params = loader.get_stock_info(symbol)
+    params = config.get_stock_info(symbol)
     if not params:
         print(f"股票 {symbol} 未配置特定参数（使用默认值）")
         print("\n使用以下命令设置参数:")
@@ -58,9 +58,9 @@ def _cmd_get(loader, symbol):
         return
 
     # 获取合并后的参数
-    vcp_params = loader.get_vcp_params(symbol)
-    zigzag_params = loader.get_zigzag_params(symbol)
-    td_params = loader.get_td_params(symbol)
+    vcp_params = config.get_vcp_params(symbol)
+    zigzag_params = config.get_zigzag_params(symbol)
+    td_params = config.get_td_params(symbol)
 
     print(f"股票 {symbol} 参数配置:\n")
     print(f"名称：{params.get('name', 'N/A')}")
@@ -74,7 +74,7 @@ def _cmd_get(loader, symbol):
     print(json.dumps(td_params, indent=2, ensure_ascii=False))
 
 
-def _cmd_set(loader, args):
+def _cmd_set(config, args):
     """设置股票参数"""
     if not args.symbol:
         print("错误：请指定股票代码")
@@ -109,16 +109,14 @@ def _cmd_set(loader, args):
         return
 
     # 设置参数
-    stock_info = loader.get_stock_info(args.symbol)
+    stock_info = config.get_stock_info(args.symbol)
     name = args.name or (stock_info.get('name') if stock_info else None)
-    loader.set_stock_params(args.symbol, name=name, **updates)
+    config.set_stock_params(args.symbol, name=name, **updates)
 
     if args.notes:
-        stock_info = loader.get_stock_info(args.symbol) or {}
-        existing_notes = stock_info.get('notes', '')
-        loader._stocks[args.symbol]['notes'] = args.notes
+        config.set_stock_params(args.symbol, name=name, notes=args.notes)
 
-    loader.save_params()
+    config.save_params()
 
     # 显示确认信息
     print(f"✅ 已更新股票 {args.symbol} 参数配置")
@@ -135,23 +133,23 @@ def _cmd_set(loader, args):
         print(f"  备注：{args.notes}")
 
 
-def _cmd_remove(loader, symbol):
+def _cmd_remove(config, symbol):
     """删除股票参数配置"""
     if not symbol:
         print("错误：请指定股票代码")
         print("用法：python main.py params remove --symbol 600519")
         return
 
-    if loader.remove_stock_params(symbol):
-        loader.save_params()
+    if config.remove_stock_params(symbol):
+        config.save_params()
         print(f"✅ 已删除股票 {symbol} 参数配置")
     else:
         print(f"股票 {symbol} 未配置参数")
 
 
-def _cmd_defaults(loader):
+def _cmd_defaults(config):
     """查看默认参数"""
-    defaults = loader.get_defaults()
+    defaults = config.get_defaults()
     if not defaults:
         print("暂无默认参数配置")
         return

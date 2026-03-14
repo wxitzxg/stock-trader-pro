@@ -19,7 +19,7 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional
-from config.settings import FIVE_DIMENSION_WEIGHTS, DECISION_THRESHOLD
+from config import FIVE_DIMENSION_WEIGHTS, DECISION_THRESHOLD
 
 from domain.analysis.indicators.base_indicators import BaseIndicators
 from domain.analysis.indicators.td_sequential import TDSequential

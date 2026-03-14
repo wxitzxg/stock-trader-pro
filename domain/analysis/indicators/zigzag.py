@@ -12,7 +12,7 @@ ZigZag 指标模块 (之字转向指标)
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
-from config.params_loader import StockParamsLoader
+from config import get_config
 
 
 class ZigZag:
@@ -31,8 +31,8 @@ class ZigZag:
         self.symbol = symbol
 
         # Load per-stock parameters
-        self._params_loader = StockParamsLoader() if symbol else None
-        zigzag_params = self._params_loader.get_zigzag_params(symbol) if symbol else {}
+        self._config = get_config() if symbol else None
+        zigzag_params = self._config.get_zigzag_params(symbol) if symbol else {}
 
         # Allow constructor args to override config
         self.threshold = threshold if threshold is not None else zigzag_params.get('threshold', 0.05)

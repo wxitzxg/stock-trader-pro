@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 from pathlib import Path
-from config.settings import REPORT_CONFIG
+from config import REPORT_CONFIG
 
 
 @dataclass

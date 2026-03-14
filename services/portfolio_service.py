@@ -11,7 +11,7 @@ from models.transaction import Transaction
 from repositories.position_repo import PositionRepository
 from repositories.transaction_repo import TransactionRepository
 from repositories.account_repo import AccountRepository
-from config.settings import TRADING_FEES
+from config import TRADING_FEES
 from repositories.sources.akshare_source import AKShareDataSource
 
 # 小数精度常量

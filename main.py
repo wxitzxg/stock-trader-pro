@@ -34,7 +34,7 @@ from repositories.database import init_database
 
 def cmd_init_db(args):
     """init-db 命令处理"""
-    from config.settings import DATABASE_PATH
+    from config import DATABASE_PATH
     init_database()
     print(f"✅ 数据库初始化成功：{DATABASE_PATH}")
 

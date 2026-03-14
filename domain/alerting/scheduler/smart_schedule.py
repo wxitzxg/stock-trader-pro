@@ -9,7 +9,7 @@
 from datetime import datetime
 from typing import Dict, Optional
 
-from config.settings import MONITOR_CONFIG
+from config import MONITOR_CONFIG
 from domain.common.trading_time import TradingTimeUtils
 
 

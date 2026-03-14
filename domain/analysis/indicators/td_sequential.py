@@ -10,7 +10,7 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional, Tuple
-from config.params_loader import StockParamsLoader
+from config import get_config
 
 
 class TDSequential:
@@ -29,15 +29,15 @@ class TDSequential:
         Args:
             df: pandas DataFrame，必须包含 'close' 列
             symbol: 股票代码 (用于加载股票特定参数)
-            period: 九转周期 (默认 9，可从 config/stock_params.json 加载)
-            compare_period: 比较周期 (默认 4，可从 config/stock_params.json 加载)
+            period: 九转周期 (默认 9，可从 config/config.json 加载)
+            compare_period: 比较周期 (默认 4，可从 config/config.json 加载)
         """
         self.df = df.copy()
         self.symbol = symbol
 
         # 加载股票特定参数
-        self._params_loader = StockParamsLoader() if symbol else None
-        td_params = self._params_loader.get_td_params(symbol) if symbol else {}
+        self._config = get_config() if symbol else None
+        td_params = self._config.get_td_params(symbol) if symbol else {}
 
         # 构造函数参数优先于配置文件
         self.period = period if period is not None else td_params.get('period', 9)

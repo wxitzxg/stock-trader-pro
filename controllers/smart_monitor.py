@@ -12,7 +12,7 @@ from pathlib import Path
 
 from controllers.monitor import cmd_monitor
 from domain.alerting.scheduler.monitor_scheduler import MonitorScheduler, create_scheduler
-from config.settings import MONITOR_CONFIG
+from config import MONITOR_CONFIG
 
 
 # 配置日志

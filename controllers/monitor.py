@@ -18,7 +18,7 @@ from domain.alerting.report_generator import (
     RuleDetail
 )
 from repositories.sources.akshare_source import AKShareDataSource
-from config.settings import REPORT_CONFIG
+from config import REPORT_CONFIG
 
 
 def calculate_technical_indicators(akshare: AKShareDataSource, code: str) -> dict:

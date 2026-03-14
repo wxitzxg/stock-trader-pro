@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from models.base import Base
-from config.settings import DATABASE_PATH
+from config import DATABASE_PATH
 
 
 class Database:

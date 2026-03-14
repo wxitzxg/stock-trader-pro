@@ -13,7 +13,7 @@ import sys
 from services.my_stocks import MyStocks
 from services.price_update_service import PriceUpdateService
 from domain.alerting.scheduler.price_scheduler import PriceUpdateScheduler, create_scheduler
-from config.settings import MONITOR_CONFIG
+from config import MONITOR_CONFIG
 from domain.common.trading_time import TradingTimeUtils
 
 

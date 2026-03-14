@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from domain.analysis.engines.ultimate_engine import UltimateEngine
-from config.settings import SIGNAL_THRESHOLD
+from config import SIGNAL_THRESHOLD
 
 
 class SignalGenerator:

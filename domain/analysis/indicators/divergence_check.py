@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from ta.trend import MACD
-from config.params_loader import StockParamsLoader
+from config import get_config
 
 
 class DivergenceCheck:
@@ -30,15 +30,15 @@ class DivergenceCheck:
         Args:
             df: pandas DataFrame，必须包含 'close', 'high', 'low' 列
             symbol: 股票代码 (用于加载股票特定参数)
-            window: 检测窗口大小 (默认 20，可从 config/stock_params.json 加载)
+            window: 检测窗口大小 (默认 20，可从 config/config.json 加载)
         """
         self.df = df.copy()
         self.symbol = symbol
         self.window = window
 
         # 加载股票特定参数
-        self._params_loader = StockParamsLoader() if symbol else None
-        div_params = self._params_loader.get_divergence_params(symbol) if symbol else {}
+        self._config = get_config() if symbol else None
+        div_params = self._config.get_divergence_params(symbol) if symbol else {}
 
         # 构造函数参数优先于配置文件
         self.window = window if window is not None else div_params.get('window', 20)

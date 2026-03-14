@@ -23,7 +23,7 @@ from datetime import datetime
 from domain.analysis.indicators.base_indicators import BaseIndicators
 from domain.analysis.indicators.td_sequential import TDSequential
 from domain.analysis.indicators.divergence_check import DivergenceCheck
-from config.settings import POSITION_PARAMS
+from config import POSITION_PARAMS
 
 
 class TDGoldenPitStrategy:
