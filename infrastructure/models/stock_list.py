@@ -1,3 +1,0 @@
-# Compatibility layer - re-export from domain.portfolio.models
-from domain.portfolio.models.stock_list import *
-

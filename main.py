@@ -10,7 +10,7 @@ import sys
 import argparse
 
 # 导入所有命令处理函数
-from commands import (
+from controllers import (
     cmd_analyze,
     cmd_portfolio,
     cmd_watchlist,
@@ -29,7 +29,7 @@ from commands import (
     cmd_smart_monitor,
     cmd_update_stock_list,
 )
-from infrastructure.database import init_database
+from repositories.database import init_database
 
 
 def cmd_init_db(args):

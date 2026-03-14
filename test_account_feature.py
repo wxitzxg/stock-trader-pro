@@ -9,7 +9,7 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from domain.portfolio.services import MyStocks
+from services.my_stocks import MyStocks
 
 
 def test_account_functions():

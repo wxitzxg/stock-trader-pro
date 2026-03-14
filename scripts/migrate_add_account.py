@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import create_engine, inspect
 from config.settings import DATABASE_PATH
-from infrastructure.models.base import Base
-from infrastructure.models.account import Account
+from models.base import Base
+from models.account import Account
 
 
 def check_table_exists(engine, table_name):

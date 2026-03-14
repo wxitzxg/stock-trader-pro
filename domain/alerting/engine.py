@@ -9,10 +9,10 @@ from domain.alerting.rules.price_alert import PriceRule
 from domain.alerting.rules.volume_alert import VolumeRule
 from domain.alerting.rules.technical_alert import TechnicalRule
 from domain.alerting.rules.trailing_stop import TrailingStopRule
-from domain.portfolio.services.position_monitor import PositionMonitor
-from domain.portfolio.services.stop_loss import StopLoss
-from domain.portfolio.services.sentiment import SentimentAnalyzer
-from domain.portfolio.services.fund_flow import FundFlowAnalyzer
+from services.position_monitor import PositionMonitor
+from services.stop_loss import StopLoss
+from services.sentiment import SentimentAnalyzer
+from services.fund_flow import FundFlowAnalyzer
 
 
 class RealtimeAlertEngine:
