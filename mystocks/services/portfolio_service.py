@@ -10,8 +10,12 @@ from mystocks.models.position import Position, PositionLot
 from mystocks.models.transaction import Transaction
 from mystocks.storage.repositories.position_repo import PositionRepository
 from mystocks.storage.repositories.transaction_repo import TransactionRepository
+from mystocks.storage.repositories.account_repo import AccountRepository
 from config.settings import TRADING_FEES
 from stockquery import get_default_service
+
+# 小数精度常量
+DECIMAL_PRECISION = '0.0001'
 
 
 class InitMode(str, Enum):
@@ -33,6 +37,11 @@ class PortfolioService:
         self.session = session
         self._position_repo = PositionRepository(session)
         self._transaction_repo = TransactionRepository(session)
+        self._account_repo = AccountRepository(session)
+
+    def _get_default_account(self):
+        """获取默认账户"""
+        return self._account_repo.get_or_create_default()
 
     def buy(
         self,
@@ -41,7 +50,8 @@ class PortfolioService:
         quantity: int,
         price: float,
         commission: float = 0.0,
-        notes: str = None
+        notes: str = None,
+        account_id: int = None
     ) -> Position:
         """
         买入股票
@@ -53,6 +63,7 @@ class PortfolioService:
             price: 成交价
             commission: 手续费
             notes: 备注
+            account_id: 账户 ID，为 None 时使用默认账户
 
         Returns:
             持仓对象
@@ -64,6 +75,17 @@ class PortfolioService:
 
         total_amount = quantity * price
         total_cost = total_amount + commission
+
+        # 获取账户并扣除现金
+        account = self._get_default_account() if account_id is None else self._account_repo.get(account_id)
+        if account is None:
+            raise ValueError(f"账户不存在：{account_id}")
+
+        # 使用账户域的 withdraw 方法扣除现金
+        try:
+            account.withdraw(total_cost)
+        except ValueError as e:
+            raise ValueError(f"现金余额不足：{e}")
 
         # 检查是否已有持仓
         position = self._position_repo.get(stock_code)
@@ -117,6 +139,9 @@ class PortfolioService:
         )
         self._transaction_repo.add(transaction)
 
+        # 提交账户变更
+        self._account_repo.update(account)
+
         return position
 
     def sell(
@@ -125,7 +150,8 @@ class PortfolioService:
         quantity: int,
         price: float,
         commission: float = 0.0,
-        notes: str = None
+        notes: str = None,
+        account_id: int = None
     ) -> Optional[Position]:
         """
         卖出股票（FIFO 成本计算）
@@ -136,6 +162,7 @@ class PortfolioService:
             price: 成交价
             commission: 手续费
             notes: 备注
+            account_id: 账户 ID，为 None 时使用默认账户
 
         Returns:
             更新后的持仓对象，或 None（清仓）
@@ -185,14 +212,14 @@ class PortfolioService:
         if position.quantity == 0:
             # 清仓
             self._position_repo.delete(position)
-            return None
-
-        self._position_repo.update(position)
+            position = None
+        else:
+            self._position_repo.update(position)
 
         # 记录交易
         transaction = Transaction(
             stock_code=stock_code,
-            stock_name=position.stock_name,
+            stock_name=position.stock_name if position else stock_code,
             operation="sell",
             quantity=quantity,
             price=price,
@@ -200,9 +227,19 @@ class PortfolioService:
             commission=commission,
             realized_pnl=total_realized_pnl,
             notes=notes,
-            position_id=position.id
+            position_id=position.id if position else None
         )
         self._transaction_repo.add(transaction)
+
+        # 更新账户：增加现金和已实现盈亏
+        account = self._get_default_account() if account_id is None else self._account_repo.get(account_id)
+        if account:
+            # 增加现金（卖出所得 - 手续费）
+            cash_proceeds = quantity * price - commission
+            account.credit_cash(cash_proceeds)
+            # 累计已实现盈亏
+            account.add_realized_pnl(total_realized_pnl)
+            self._account_repo.update(account)
 
         return position
 
@@ -395,7 +432,7 @@ class PortfolioService:
 
     def _round_to_4_decimals(self, value: float) -> float:
         """四舍五入到 4 位小数"""
-        return float(Decimal(str(value)).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP))
+        return float(Decimal(str(value)).quantize(Decimal(DECIMAL_PRECISION), rounding=ROUND_HALF_UP))
 
     def _calculate_profit_loss(self, avg_cost: float, current_price: float, quantity: int) -> tuple:
         """

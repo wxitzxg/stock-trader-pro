@@ -31,9 +31,17 @@ def cmd_portfolio(args):
 
         elif args.sell:
             # 卖出
-            if not args.symbol or not args.qty or not args.price:
-                print("卖出需要提供 --symbol, --qty, --price")
+            if not args.symbol or not args.price:
+                print("卖出需要提供 --symbol, --price")
                 return
+
+            # 清仓模式：卖出全部持仓
+            if args.all:
+                position = ms.get_position(args.symbol)
+                if not position:
+                    print(f"❌ 未找到持仓：{args.symbol}")
+                    return
+                args.qty = position.quantity
 
             commission = ms.calculate_commission(args.qty * args.price, "sell")
             position = ms.sell(

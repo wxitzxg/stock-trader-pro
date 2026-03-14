@@ -1,13 +1,13 @@
 """
-基于 schedule 库的价格更新调度器
+基于 APScheduler 的价格更新调度器
 """
 
 import logging
-import time
 from datetime import datetime
 from typing import Optional, Callable
 
-import schedule
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 from common.trading_time import TradingTimeUtils
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PriceUpdateScheduler:
     """
-    基于 schedule 库的价格更新调度器
+    基于 APScheduler 的价格更新调度器
 
     特性:
     - 只在交易时间执行价格更新
@@ -47,8 +47,8 @@ class PriceUpdateScheduler:
         self._update_count = 0
         self._skip_count = 0
 
-        # 注册定时任务
-        schedule.every(check_interval).seconds.do(self._job)
+        # 创建 APScheduler 实例
+        self.scheduler = BlockingScheduler()
 
     def _job(self) -> None:
         """
@@ -65,20 +65,11 @@ class PriceUpdateScheduler:
             self._skip_count += 1
             return
 
-        # 交易时间，检查距离上次更新是否已过 update_interval 秒
-        now = datetime.now()
-        if self._last_update_time is not None:
-            elapsed = (now - self._last_update_time).total_seconds()
-            if elapsed < self._update_interval:
-                # 还未到更新时间
-                logger.debug(f"未到更新时间，距离上次更新 {elapsed:.0f} 秒")
-                return
-
-        # 执行价格更新
+        # 交易时间，执行价格更新
         logger.info(f"开始更新持仓价格（交易时间：{result['market_phase']}）")
         try:
             self._update_func()
-            self._last_update_time = now
+            self._last_update_time = datetime.now()
             self._update_count += 1
             logger.info(f"价格更新完成，累计更新 {self._update_count} 次")
         except Exception as e:
@@ -96,9 +87,16 @@ class PriceUpdateScheduler:
         )
         self._running = True
 
-        while self._running:
-            schedule.run_pending()
-            time.sleep(1)
+        # 添加定时任务到 APScheduler
+        self.scheduler.add_job(
+            self._job,
+            trigger=IntervalTrigger(seconds=self._check_interval),
+            id='price_update',
+            name='价格更新',
+            max_instances=1  # 防止并发执行
+        )
+
+        self.scheduler.start()
 
         logger.info("价格更新调度器已停止")
 
@@ -106,6 +104,8 @@ class PriceUpdateScheduler:
         """停止调度器"""
         logger.info("正在停止价格更新调度器...")
         self._running = False
+        if self.scheduler.running:
+            self.scheduler.shutdown(wait=False)
 
     @property
     def is_running(self) -> bool:

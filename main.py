@@ -22,6 +22,8 @@ from commands import (
     cmd_search,
     cmd_export,
     cmd_params,
+    cmd_account,
+    cmd_holdings,
 )
 from mystocks.storage.database import init_database
 
@@ -69,8 +71,9 @@ def cmd_init_position(args):
 
 def cmd_daemon(args):
     """daemon 命令处理 - 启动后台监控进程"""
-    import time
     from pathlib import Path
+    from apscheduler.schedulers.blocking import BlockingScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
     from realalerts import SmartScheduler
     from commands.monitor import cmd_monitor
     from argparse import Namespace
@@ -85,49 +88,57 @@ def cmd_daemon(args):
     print("按 Ctrl+C 停止监控")
     print()
 
-    scheduler = SmartScheduler()
-    run_count = 0
+    run_count = [0]  # 使用列表以便在嵌套函数中修改
+
+    def run_monitor():
+        """监控任务执行函数"""
+        result = SmartScheduler.should_run_now()
+
+        if not result.get("run"):
+            reason = result.get("reason", "未知原因")
+            print(f"⏸️  跳过监控：{reason}")
+            return
+
+        run_count[0] += 1
+        mode = result.get('mode', 'default')
+        print(f"\n{'='*60}")
+        print(f"🕐 执行监控 #{run_count[0]} (模式：{mode})")
+        print(f"{'='*60}\n")
+
+        # 构建 monitor 命令参数
+        monitor_args = Namespace()
+        monitor_args.output = None
+        monitor_args.no_position = False
+        monitor_args.no_watchlist = False
+
+        # 如果指定了输出目录，生成报告文件
+        if output_dir:
+            output_path = Path(output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+            import time
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            monitor_args.output = str(output_path / f"monitor_{timestamp}.md")
+
+        # 执行监控
+        try:
+            cmd_monitor(monitor_args)
+        except Exception as e:
+            print(f"⚠️ 监控执行失败：{e}")
+
+    scheduler = BlockingScheduler()
+    scheduler.add_job(
+        run_monitor,
+        trigger=IntervalTrigger(seconds=interval),
+        id='market_monitor',
+        name='市场监控',
+        max_instances=1
+    )
 
     try:
-        while True:
-            result = scheduler.should_run_now()
-
-            if result.get("run"):
-                run_count += 1
-                mode = result.get('mode', 'default')
-                print(f"\n{'='*60}")
-                print(f"🕐 执行监控 #{run_count} (模式：{mode}, 间隔：{result.get('interval', interval)}s)")
-                print(f"{'='*60}\n")
-
-                # 构建 monitor 命令参数
-                monitor_args = Namespace()
-                monitor_args.output = None
-                monitor_args.no_position = False
-                monitor_args.no_watchlist = False
-
-                # 如果指定了输出目录，生成报告文件
-                if output_dir:
-                    output_path = Path(output_dir)
-                    output_path.mkdir(parents=True, exist_ok=True)
-                    timestamp = time.strftime("%Y%m%d_%H%M%S")
-                    monitor_args.output = str(output_path / f"monitor_{timestamp}.md")
-
-                # 执行监控
-                try:
-                    cmd_monitor(monitor_args)
-                except Exception as e:
-                    print(f"⚠️ 监控执行失败：{e}")
-
-            else:
-                # 不运行，显示原因
-                reason = result.get("reason", "未知原因")
-                print(f"⏸️  跳过监控：{reason}（下次检查：{interval}秒后）")
-
-            # 等待
-            time.sleep(result.get("interval", interval))
-
-    except KeyboardInterrupt:
-        print(f"\n👋 监控已停止（共执行 {run_count} 次）")
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown(wait=False)
+        print(f"\n👋 监控已停止（共执行 {run_count[0]} 次）")
 
 
 def cmd_mystocks(args):
@@ -197,7 +208,20 @@ Examples:
     portfolio_parser.add_argument('--price', type=float, help='成交价')
     portfolio_parser.add_argument('--name', help='股票名称')
     portfolio_parser.add_argument('--notes', help='备注')
+    portfolio_parser.add_argument('--all', action='store_true', help='清仓（卖出全部）')
     portfolio_parser.set_defaults(func=cmd_portfolio)
+
+    # account 命令 - 账户管理
+    account_parser = subparsers.add_parser('account', help='账户管理')
+    account_parser.add_argument('--summary', action='store_true', help='显示账户总览')
+    account_parser.add_argument('--deposit', type=float, help='存入现金')
+    account_parser.add_argument('--withdraw', type=float, help='取出现金')
+    account_parser.set_defaults(func=cmd_account)
+
+    # holdings 命令 - 持仓详情
+    holdings_parser = subparsers.add_parser('holdings', help='持仓详情（含仓位比）')
+    holdings_parser.add_argument('--refresh', action='store_true', help='刷新最新股价')
+    holdings_parser.set_defaults(func=cmd_holdings)
 
     # watchlist 命令 - 使用新的 mystocks 模块
     watchlist_parser = subparsers.add_parser('watchlist', help='收藏股管理')

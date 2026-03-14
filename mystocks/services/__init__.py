@@ -6,6 +6,9 @@ from mystocks.services.portfolio_service import PortfolioService
 from mystocks.services.watchlist_service import WatchlistService
 from mystocks.services.analysis_service import AnalysisService
 from mystocks.services.price_update_service import PriceUpdateService
+from mystocks.services.account_service import AccountService
+from mystocks.services.kline_init_service import KlineInitService
+from mystocks.services.kline_scheduler import KlineScheduler
 from mystocks.storage.database import get_db
 
 __all__ = [
@@ -13,6 +16,9 @@ __all__ = [
     'WatchlistService',
     'AnalysisService',
     'PriceUpdateService',
+    'AccountService',
+    'KlineInitService',
+    'KlineScheduler',
     # Compatibility functions
     'get_stock_quote',
     'format_stock_info',

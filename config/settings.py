@@ -19,6 +19,11 @@ AKSHARE_TIMEOUT = 30  # 请求超时时间（秒）
 AKSHARE_SEARCH_LIMIT = 20  # 搜索结果数量
 AKSHARE_EXPORT_DAYS_DEFAULT = 60  # 导出默认天数
 
+# ========== K 线缓存配置 ==========
+KLINE_CACHE_ENABLED = True       # 是否启用数据库缓存
+KLINE_DEFAULT_DAYS = 250         # 默认初始化天数
+KLINE_DAILY_UPDATE_TIME = "00:00"  # 每日更新时间
+
 # ========== 波段策略参数 ==========
 STRATEGY_PARAMS = {
     # 均线参数

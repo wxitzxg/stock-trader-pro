@@ -11,18 +11,29 @@ from stockquery.sources.base import BaseDataSource
 
 
 class AKShareDataSource(BaseDataSource):
-    """AKShare 数据源"""
+    """AKShare 数据源 - 带数据库缓存"""
 
     name = "akshare"
 
-    def __init__(self, timeout: int = 30):
+    def __init__(self, db=None, timeout: int = 30):
         """
         初始化 AKShare 数据源
 
         Args:
+            db: Database 实例（用于缓存）
             timeout: 请求超时时间 (秒)
         """
+        self.db = db
         self.timeout = timeout
+        self._kline_repo = None
+
+    @property
+    def kline_repo(self):
+        """延迟初始化 KlineRepository"""
+        if self._kline_repo is None and self.db:
+            from mystocks.storage.repositories.kline_repo import KlineRepository
+            self._kline_repo = KlineRepository(self.db.get_session())
+        return self._kline_repo
 
     def get_historical_data(
         self,
@@ -33,7 +44,7 @@ class AKShareDataSource(BaseDataSource):
         adjust: str = "qfq"
     ) -> Optional[pd.DataFrame]:
         """
-        获取股票历史数据
+        获取股票历史数据（优先从数据库读取，没有时调用 AKShare 并保存）
 
         Args:
             symbol: 股票代码 (如 "601857")
@@ -45,13 +56,43 @@ class AKShareDataSource(BaseDataSource):
         Returns:
             pandas DataFrame with OHLCV data
         """
-        try:
-            # 默认获取最近 250 天的数据
-            if end_date is None:
-                end_date = datetime.now().strftime('%Y%m%d')
-            if start_date is None:
-                start_date = (datetime.now() - timedelta(days=250)).strftime('%Y%m%d')
+        # 默认获取最近 250 天的数据
+        if end_date is None:
+            end_date = datetime.now().strftime('%Y%m%d')
+        if start_date is None:
+            start_date = (datetime.now() - timedelta(days=250)).strftime('%Y%m%d')
 
+        # 优先从数据库读取
+        if self.kline_repo:
+            try:
+                df = self.kline_repo.get_klines_df(symbol, start_date, end_date, period, adjust)
+                if df is not None and not df.empty:
+                    return df
+            except Exception as e:
+                print(f"数据库读取失败，切换到 AKShare API: {e}")
+
+        # 数据库没有数据，调用 AKShare API
+        df = self._fetch_from_akshare(symbol, start_date, end_date, period, adjust)
+
+        # 同步保存到数据库
+        if df is not None and not df.empty and self.kline_repo:
+            try:
+                self._save_to_database(symbol, df, period, adjust)
+            except Exception as e:
+                print(f"数据库保存失败：{e}")
+
+        return df
+
+    def _fetch_from_akshare(
+        self,
+        symbol: str,
+        start_date: str,
+        end_date: str,
+        period: str,
+        adjust: str
+    ) -> Optional[pd.DataFrame]:
+        """从 AKShare 获取数据"""
+        try:
             df = ak.stock_zh_a_hist(
                 symbol=symbol,
                 period=period,
@@ -78,6 +119,10 @@ class AKShareDataSource(BaseDataSource):
                 '换手率': 'turnover'
             })
 
+            # 删除不需要的列
+            if '股票代码' in df.columns:
+                df = df.drop(columns=['股票代码'])
+
             # 确保日期列为 datetime 类型
             df['date'] = pd.to_datetime(df['date'])
             df = df.set_index('date')
@@ -93,6 +138,77 @@ class AKShareDataSource(BaseDataSource):
         except Exception as e:
             print(f"AKShare 历史数据获取失败：{e}")
             return None
+
+    def _save_to_database(
+        self,
+        symbol: str,
+        df: pd.DataFrame,
+        period: str,
+        adjust: str
+    ):
+        """
+        将数据保存到数据库
+
+        Args:
+            symbol: 股票代码
+            df: DataFrame 数据
+            period: 周期
+            adjust: 复权类型
+        """
+        df_reset = df.reset_index()
+        klines_data = []
+        for _, row in df_reset.iterrows():
+            date_str = row['date']
+            if isinstance(date_str, pd.Timestamp):
+                date_str = date_str.strftime('%Y%m%d')
+            elif isinstance(date_str, datetime):
+                date_str = date_str.strftime('%Y%m%d')
+
+            klines_data.append({
+                'date': date_str,
+                'open': float(row['open']),
+                'high': float(row['high']),
+                'low': float(row['low']),
+                'close': float(row['close']),
+                'volume': float(row['volume']),
+                'amount': float(row.get('amount', 0)),
+                'amplitude': float(row.get('amplitude', 0)),
+                'pct_change': float(row.get('pct_change', 0)),
+                'change': float(row.get('change', 0)),
+                'turnover': float(row.get('turnover', 0))
+            })
+
+        self.kline_repo.upsert_klines(symbol, klines_data, period, adjust)
+
+    def get_historical_data_raw(
+        self,
+        symbol: str,
+        start_date: str = None,
+        end_date: str = None,
+        period: str = "daily",
+        adjust: str = "qfq"
+    ) -> Optional[pd.DataFrame]:
+        """
+        获取股票历史数据（原始方法，直接从 AKShare 获取，不使用缓存）
+        用于初始化服务和定时任务
+
+        Args:
+            symbol: 股票代码 (如 "601857")
+            start_date: 开始日期 (YYYYMMDD)
+            end_date: 结束日期 (YYYYMMDD)
+            period: 周期 (daily/weekly/monthly)
+            adjust: 复权类型 (qfq/hfq/none)
+
+        Returns:
+            pandas DataFrame with OHLCV data
+        """
+        # 默认获取最近 250 天的数据
+        if end_date is None:
+            end_date = datetime.now().strftime('%Y%m%d')
+        if start_date is None:
+            start_date = (datetime.now() - timedelta(days=250)).strftime('%Y%m%d')
+
+        return self._fetch_from_akshare(symbol, start_date, end_date, period, adjust)
 
     def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """

@@ -14,9 +14,9 @@ from typing import Optional, List, Dict
 import json
 import csv
 
-from mystocks.models import Position, Watchlist, Transaction, PositionLot
+from mystocks.models import Position, Watchlist, Transaction, PositionLot, Account
 from mystocks.storage import Database
-from mystocks.services import PortfolioService, WatchlistService, AnalysisService
+from mystocks.services import PortfolioService, WatchlistService, AnalysisService, AccountService
 from mystocks.services.portfolio_service import InitMode
 
 
@@ -42,6 +42,7 @@ class MyStocks:
         self._portfolio_service = PortfolioService(self._session)
         self._watchlist_service = WatchlistService(self._session)
         self._analysis_service = AnalysisService(self._session)
+        self._account_service = AccountService(self._session)
 
     # ========== 持仓管理 API ==========
 
@@ -52,7 +53,8 @@ class MyStocks:
         quantity: int,
         price: float,
         commission: float = 0.0,
-        notes: str = None
+        notes: str = None,
+        account_id: int = None
     ) -> Position:
         """
         买入股票
@@ -64,6 +66,7 @@ class MyStocks:
             price: 成交价
             commission: 手续费
             notes: 备注
+            account_id: 账户 ID，为 None 时使用默认账户
 
         Returns:
             持仓对象
@@ -74,7 +77,8 @@ class MyStocks:
             quantity=quantity,
             price=price,
             commission=commission,
-            notes=notes
+            notes=notes,
+            account_id=account_id
         )
 
     def sell(
@@ -83,7 +87,8 @@ class MyStocks:
         quantity: int,
         price: float,
         commission: float = 0.0,
-        notes: str = None
+        notes: str = None,
+        account_id: int = None
     ) -> Optional[Position]:
         """
         卖出股票（FIFO 成本计算）
@@ -94,6 +99,7 @@ class MyStocks:
             price: 成交价
             commission: 手续费
             notes: 备注
+            account_id: 账户 ID，为 None 时使用默认账户
 
         Returns:
             更新后的持仓对象，或 None（清仓）
@@ -103,7 +109,8 @@ class MyStocks:
             quantity=quantity,
             price=price,
             commission=commission,
-            notes=notes
+            notes=notes,
+            account_id=account_id
         )
 
     def get_position(self, stock_code: str) -> Optional[Position]:
@@ -181,6 +188,74 @@ class MyStocks:
     def get_risk_exposure(self) -> Dict:
         """计算风险敞口"""
         return self._analysis_service.get_risk_exposure()
+
+    # ========== 账户管理 API ==========
+
+    def get_account_summary(self) -> Dict:
+        """
+        获取账户总览
+
+        Returns:
+            {
+                "account_id": int,
+                "account_name": str,
+                "cash_balance": float,           # 当前现金
+                "stock_market_value": float,     # 持仓总市值
+                "total_account_value": float,    # 总资产 = 持仓市值 + 现金
+                "position_ratio": float,         # 仓位比 = 持仓市值 / 总资产
+                "floating_pnl": float,           # 浮动盈亏 (未实现)
+                "floating_pnl_rate": float,      # 浮动盈亏比
+                "realized_pnl": float,           # 已实现盈亏
+                "total_pnl": float,              # 总盈亏 = 浮动 + 已实现
+                "total_invested": float,         # 累计投入本金
+            }
+        """
+        return self._account_service.get_account_summary()
+
+    def get_holdings_with_details(self) -> List[Dict]:
+        """
+        获取持仓详情列表（含仓位比）
+
+        Returns:
+            [
+                {
+                    "stock_code": str,
+                    "stock_name": str,
+                    "quantity": int,
+                    "current_price": float,
+                    "market_value": float,         # 市值 = 现价 × 数量
+                    "avg_cost": float,
+                    "floating_pnl": float,         # 浮动盈亏
+                    "floating_pnl_rate": float,    # 浮动盈亏比
+                    "position_ratio": float,       # 仓位比 = 该持仓市值 / 总资产
+                }
+            ]
+        """
+        return self._account_service.get_holdings_with_details()
+
+    def deposit(self, amount: float) -> Account:
+        """
+        存入现金
+
+        Args:
+            amount: 存入金额
+
+        Returns:
+            更新后的账户对象
+        """
+        return self._account_service.deposit(amount)
+
+    def withdraw(self, amount: float) -> Account:
+        """
+        取出现金
+
+        Args:
+            amount: 取出金额
+
+        Returns:
+            更新后的账户对象
+        """
+        return self._account_service.withdraw(amount)
 
     # ========== 工具方法 ==========
 
@@ -387,6 +462,7 @@ class MyStocks:
 
 __all__ = [
     'MyStocks',
+    'Account',
     'Position',
     'PositionLot',
     'Transaction',

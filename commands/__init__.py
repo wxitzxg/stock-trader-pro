@@ -14,6 +14,7 @@ from .flow import cmd_flow
 from .search import cmd_search
 from .export import cmd_export
 from .params import cmd_params
+from .account import cmd_account, cmd_holdings
 
 __all__ = [
     'analyze_stock',
@@ -29,4 +30,6 @@ __all__ = [
     'cmd_search',
     'cmd_export',
     'cmd_params',
+    'cmd_account',
+    'cmd_holdings',
 ]

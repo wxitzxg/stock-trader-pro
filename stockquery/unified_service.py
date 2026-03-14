@@ -24,21 +24,22 @@ class UnifiedStockQueryService:
 
     智能路由策略：
     - get_quote(): 新浪财经 (主) → AKShare(备)
-    - get_historical_data(): AKShare (唯一)
+    - get_historical_data(): AKShare (唯一) - 带数据库缓存
     - get_stock_info(): 东方财富 (主) → AKShare(备)
     - get_fund_flow(): AKShare (唯一)
     - get_sector_rank(): 东方财富 (主) → AKShare(备)
     - search_stock(): AKShare (唯一)
     """
 
-    def __init__(self, timeout: int = 10):
+    def __init__(self, db=None, timeout: int = 10):
         """
         初始化统一服务
 
         Args:
+            db: Database 实例（用于 K 线缓存）
             timeout: 请求超时时间 (秒)
         """
-        self.akshare = AKShareDataSource(timeout=timeout)
+        self.akshare = AKShareDataSource(db=db, timeout=timeout)
         self.eastmoney = EastmoneyDataSource(timeout=timeout)
         self.sina = SinaDataSource(timeout=timeout)
 
@@ -285,9 +286,9 @@ class UnifiedStockQueryService:
 _default_service: Optional[UnifiedStockQueryService] = None
 
 
-def get_default_service(timeout: int = 10) -> UnifiedStockQueryService:
+def get_default_service(db=None, timeout: int = 10) -> UnifiedStockQueryService:
     """获取默认服务实例"""
     global _default_service
     if _default_service is None:
-        _default_service = UnifiedStockQueryService(timeout=timeout)
+        _default_service = UnifiedStockQueryService(db=db, timeout=timeout)
     return _default_service
