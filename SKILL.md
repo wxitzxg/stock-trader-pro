@@ -816,16 +816,6 @@ python3 main.py account --deposit 100000
 # 数据流：减少 cash_balance 字段，需余额充足
 python3 main.py account --withdraw 50000
 
-# 直接使用 mystocks 模块（备用方式） - 不通过 main.py 直接调用模块
-# 使用场景：脚本集成/自动化任务，避免参数解析开销
-python3 -m mystocks pos           # 查看持仓
-python3 -m mystocks buy 600519 --qty 100 --price 1500 --name 贵州茅台  # 买入
-python3 -m mystocks sell 600519 --qty 50 --price 1600  # 卖出
-python3 -m mystocks summary       # 资产汇总
-python3 -m mystocks history --limit 50  # 交易历史
-python3 -m mystocks init --code 600519 --qty 100 --cost 1500 --name 贵州茅台  # 初始化持仓
-python3 -m mystocks update-prices --once  # 更新持仓价格（单次刷新）
-```
 
 ### 返回数据格式
 
