@@ -4,7 +4,7 @@ query 命令 - 查询股票实时行情
 """
 
 import json
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 
 
 def format_stock_info(quote: dict) -> str:

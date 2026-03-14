@@ -14,10 +14,10 @@ from typing import Optional, List, Dict
 import json
 import csv
 
-from mystocks.models import Position, Watchlist, Transaction, PositionLot, Account
-from mystocks.storage import Database
-from mystocks.services import PortfolioService, WatchlistService, AnalysisService, AccountService
-from mystocks.services.portfolio_service import InitMode
+from domain.portfolio import Position, Watchlist, Transaction, PositionLot, Account
+from domain.portfolio.repositories import Database
+from domain.portfolio.services import PortfolioService, WatchlistService, AnalysisService, AccountService
+from domain.portfolio.services.portfolio_service import InitMode
 
 
 class MyStocks:

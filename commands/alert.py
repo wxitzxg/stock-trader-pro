@@ -5,10 +5,10 @@ alert 命令 - 执行一次预警检查
 """
 
 import json
-from mystocks.storage.database import get_db
+from domain.portfolio.repositories.database import get_db
 from mystocks.services import WatchlistService
-from realalerts import RealtimeAlertEngine, AlertConfig
-from stockquery import UnifiedStockQueryService
+from domain.alerting import RealtimeAlertEngine, AlertConfig
+from infrastructure.unified_service import UnifiedStockQueryService
 
 
 def cmd_alert(args):

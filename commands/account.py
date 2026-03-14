@@ -7,8 +7,8 @@ account 命令 - 账户管理
 import json
 from typing import Any
 from mystocks import MyStocks
-from mystocks.services.price_update_service import PriceUpdateService
-from mystocks.storage.database import get_db
+from domain.portfolio.services.price_update_service import PriceUpdateService
+from domain.portfolio.repositories.database import get_db
 
 
 def format_account_summary_json(summary: dict) -> str:

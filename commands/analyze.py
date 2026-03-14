@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from stockquery.unified_service import UnifiedStockQueryService
-from investing import (
+from infrastructure.unified_service import UnifiedStockQueryService
+from domain.analysis import (
     UltimateEngine,
     SignalGenerator,
     VCPBreakoutStrategy,
@@ -137,8 +137,8 @@ def format_analysis_report(result: dict) -> str:
 
 def cmd_analyze(args):
     """analyze 命令处理"""
-    from mystocks.storage.database import get_db
-    from mystocks.services.watchlist_service import WatchlistService
+    from domain.portfolio.repositories.database import get_db
+    from domain.portfolio.services.watchlist_service import WatchlistService
 
     if args.watchlist:
         # 分析收藏股列表
@@ -160,8 +160,8 @@ def cmd_analyze(args):
 
 def analyze_watchlist(args):
     """分析收藏股列表"""
-    from mystocks.storage.database import get_db
-    from mystocks.services.watchlist_service import WatchlistService
+    from domain.portfolio.repositories.database import get_db
+    from domain.portfolio.services.watchlist_service import WatchlistService
 
     db = get_db()
     db.init_db()

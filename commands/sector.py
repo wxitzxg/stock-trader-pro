@@ -4,7 +4,7 @@ sector 命令 - 查看板块涨幅排行
 """
 
 import json
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 
 
 def format_sector_report(data: dict, limit: int = 50) -> str:

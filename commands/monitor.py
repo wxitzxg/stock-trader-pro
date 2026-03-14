@@ -9,17 +9,17 @@ from datetime import datetime
 from pathlib import Path
 
 from mystocks import MyStocks
-from mystocks.models.position import Position
-from mystocks.models.watchlist import Watchlist
-from realalerts import RealtimeAlertEngine, AlertConfig
-from realalerts.report_generator import (
+from domain.portfolio.models.position import Position
+from domain.portfolio.models.watchlist import Watchlist
+from domain.alerting import RealtimeAlertEngine, AlertConfig
+from domain.alerting.report_generator import (
     MonitorReportGenerator,
     PositionStock,
     WatchlistStock,
     StockAlert,
     RuleDetail
 )
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 from config.settings import REPORT_CONFIG
 
 

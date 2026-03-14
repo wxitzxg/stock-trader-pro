@@ -1,0 +1,117 @@
+{
+  "database": {
+    "path": "storage/investment.db",
+    "env_var": "INVEST_DB_PATH"
+  },
+  "akshare": {
+    "timeout": 30,
+    "search_limit": 20,
+    "export_days_default": 60
+  },
+  "kline": {
+    "cache_enabled": true,
+    "default_days": 250,
+    "daily_update_time": "00:00"
+  },
+  "strategy_params": {
+    "ma_short": 5,
+    "ma_mid": 20,
+    "ma_long": 50,
+    "ma_ema_200": 200,
+    "rsi_period": 14,
+    "rsi_overbought": 70,
+    "rsi_oversold": 30,
+    "boll_period": 20,
+    "boll_std": 2.0,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "vcp_min_drops": 2,
+    "vcp_max_drops": 4,
+    "vcp_min_contraction": 0.5,
+    "td_period": 9,
+    "td_compare_period": 4,
+    "zigzag_threshold": 0.05
+  },
+  "signal_threshold": {
+    "high": 80,
+    "medium": 65,
+    "low": 40
+  },
+  "five_dimension_weights": {
+    "D1_trend": 20,
+    "D2_pattern": 30,
+    "D3_position": 20,
+    "D4_momentum": 10,
+    "D5_trigger": 20
+  },
+  "decision_threshold": {
+    "strong_buy": 85,
+    "buy": 65,
+    "hold": 40
+  },
+  "position_params": {
+    "max_single_position": 0.20,
+    "kelly_factor": 0.5,
+    "min_position": 0.05
+  },
+  "price_alert_threshold": {
+    "rise": 5.0,
+    "fall": -5.0
+  },
+  "trading_fees": {
+    "stamp_duty": 0.0005,
+    "exchange_fee": 0.00006,
+    "broker_commission": 0.00015,
+    "min_commission": 0.0
+  },
+  "stop_loss_params": {
+    "vcp_breakout": {
+      "initial_stop_pct": 0.03,
+      "trail_start_pct": 0.10,
+      "trail_step_pct": 0.02
+    },
+    "td_golden_pit": {
+      "initial_stop_pct": 0.02,
+      "break_even_target": 0.10
+    }
+  },
+  "monitor_config": {
+    "cost_pct_above": 15.0,
+    "cost_pct_below": -12.0,
+    "change_pct_above": 4.0,
+    "change_pct_below": -4.0,
+    "volume_surge": 2.0,
+    "interval_market": 300,
+    "interval_lunch": 600,
+    "interval_after_hours": 1800,
+    "interval_night": 3600,
+    "interval_weekend": 3600,
+    "price_update_enabled": true,
+    "price_update_check_interval": 60,
+    "price_update_interval_market": 300
+  },
+  "report_config": {
+    "default_output_dir": "./monitor_reports",
+    "output_format": "markdown",
+    "include_summary": true,
+    "include_alerts": true,
+    "include_positions": true,
+    "include_watchlist": true,
+    "include_risk_tips": true,
+    "include_rule_details": true,
+    "rule_details": {
+      "cost_rule": true,
+      "price_rule": true,
+      "volume_rule": true,
+      "technical_rule": true,
+      "trailing_stop": true
+    }
+  },
+  "log": {
+    "level": "INFO",
+    "env_var": "INVEST_LOG_LEVEL",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "storage/stock-trader.log"
+  }
+}

@@ -1,23 +1,20 @@
 """
-股票查询模块
-整合 AKShare、东方财富、新浪财经三个数据源
+股票查询模块 - 兼容层（导出到 infrastructure）
 """
-from stockquery.unified_service import (
-    UnifiedStockQueryService,
-    get_default_service,
-)
-from stockquery.models import (
+from infrastructure.models.quote_data import (
     QuoteData,
     StockInfo,
     FundFlowSummary,
     SectorData,
     UnifiedStockData,
 )
-from stockquery.sources import (
-    BaseDataSource,
-    AKShareDataSource,
-    SinaDataSource,
-    EastmoneyDataSource,
+from infrastructure.sources.base import BaseDataSource
+from infrastructure.sources.akshare_source import AKShareDataSource
+from infrastructure.sources.sina_source import SinaDataSource
+from infrastructure.sources.eastmoney_source import EastmoneyDataSource
+from infrastructure.unified_service import (
+    UnifiedStockQueryService,
+    get_default_service,
 )
 
 __all__ = [

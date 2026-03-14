@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from commands.monitor import cmd_monitor
-from realalerts.scheduler.monitor_scheduler import MonitorScheduler, create_scheduler
+from domain.alerting.scheduler.monitor_scheduler import MonitorScheduler, create_scheduler
 from config.settings import MONITOR_CONFIG
 
 

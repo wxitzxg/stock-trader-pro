@@ -2,8 +2,8 @@
 """
 update-stock-list 命令 - 更新 A 股股票列表缓存
 """
-from stockquery import UnifiedStockQueryService
-from mystocks.storage.database import get_db
+from infrastructure.unified_service import UnifiedStockQueryService
+from domain.portfolio.repositories.database import get_db
 
 
 def cmd_update_stock_list(args):
@@ -27,7 +27,7 @@ def cmd_update_stock_list(args):
 
     else:
         # 默认：检查缓存状态，如果没有数据则全量更新，否则增量更新
-        from mystocks.storage.repositories.stock_list_repo import StockListRepository
+        from domain.portfolio.repositories.stock_list_repo import StockListRepository
         repo = StockListRepository(db.get_session())
         stock_count = repo.get_count()
 

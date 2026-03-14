@@ -4,7 +4,7 @@ search 命令 - 搜索股票
 """
 
 import json
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 
 
 def cmd_search(args):

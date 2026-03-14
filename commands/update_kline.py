@@ -11,8 +11,8 @@ import signal
 import sys
 from datetime import datetime
 
-from mystocks.storage.database import Database
-from mystocks.services.kline_scheduler import KlineScheduler
+from domain.portfolio.repositories.database import Database
+from domain.portfolio.services.kline_scheduler import KlineScheduler
 
 
 # 配置日志
@@ -54,7 +54,7 @@ def run_once(args):
         if hasattr(args, 'stock_code') and args.stock_code:
             session = db.get_session()
             try:
-                from mystocks.storage.repositories.kline_repo import KlineRepository
+                from domain.portfolio.repositories.kline_repo import KlineRepository
                 kline_repo = KlineRepository(session)
                 scheduler.update_single_symbol(
                     args.stock_code,

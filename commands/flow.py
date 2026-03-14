@@ -4,7 +4,7 @@ flow 命令 - 查看资金流向分析
 """
 
 import json
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 
 
 def format_flow_json(code: str, flow_data: dict) -> str:

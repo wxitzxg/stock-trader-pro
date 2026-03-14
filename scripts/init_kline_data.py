@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mystocks.storage.database import Database
 from mystocks.services.kline_init_service import KlineInitService
-from stockquery.sources.akshare_source import AKShareDataSource
+from infrastructure.sources.akshare_source import AKShareDataSource
 
 
 def setup_logging():

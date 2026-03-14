@@ -1,19 +1,19 @@
 """
-实时预警模块 - 整合七大预警规则、仓位管理、动态止损、智能分析引擎
+实时预警模块 - 兼容层（导出到 domain.alerting）
 """
-from realalerts.engine import RealtimeAlertEngine
-from realalerts.types import AlertConfig, AlertLevel, AlertType, AlertResult
-from realalerts.rules import (
+from domain.alerting.engine import RealtimeAlertEngine
+from domain.alerting.types import AlertConfig, AlertLevel, AlertType, AlertResult
+from domain.alerting.rules import (
     CostRule,
     PriceRule,
     VolumeRule,
     TechnicalRule,
     TrailingStopRule,
 )
-from realalerts.position import PositionMonitor, StopLoss
-from realalerts.analysis import SentimentAnalyzer, FundFlowAnalyzer
-from realalerts.scheduler import SmartScheduler
-from realalerts.report_generator import (
+from domain.portfolio.services import PositionMonitor, StopLoss
+from domain.portfolio.services import SentimentAnalyzer, FundFlowAnalyzer
+from domain.alerting.scheduler import SmartScheduler
+from domain.alerting.report_generator import (
     MonitorReportGenerator,
     PositionStock,
     WatchlistStock,

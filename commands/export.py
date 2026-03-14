@@ -4,7 +4,7 @@ export 命令 - 导出历史 K 线数据
 """
 
 from datetime import datetime, timedelta
-from stockquery import UnifiedStockQueryService
+from infrastructure.unified_service import UnifiedStockQueryService
 import pandas as pd
 
 
