@@ -11,7 +11,7 @@ from typing import Optional, Callable
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from common.trading_time import TradingTimeUtils
+from domain.common.trading_time import TradingTimeUtils
 from domain.alerting.scheduler.smart_schedule import SmartScheduler
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from config.settings import MONITOR_CONFIG
-from common.trading_time import TradingTimeUtils
+from domain.common.trading_time import TradingTimeUtils
 
 
 class SmartScheduler:

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from domain.portfolio.models.position import Position
 from domain.portfolio.repositories.position_repo import PositionRepository
-from common.trading_time import TradingTimeUtils
+from domain.common.trading_time import TradingTimeUtils
 from infrastructure.unified_service import get_default_service
 
 

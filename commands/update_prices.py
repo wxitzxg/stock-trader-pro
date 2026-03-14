@@ -155,7 +155,7 @@ def run_continuous(args):
         logger.info("调度器运行中，按 Ctrl+C 停止...")
 
         # 显示下次更新时间
-        from common.trading_time import TradingTimeUtils
+        from domain.common.trading_time import TradingTimeUtils
         next_open = TradingTimeUtils.get_next_market_open()
         logger.info(f"下次开盘时间：{next_open}")
 

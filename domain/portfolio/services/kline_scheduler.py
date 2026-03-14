@@ -12,7 +12,7 @@ from domain.portfolio.repositories.database import Database
 from domain.portfolio.services.kline_init_service import KlineInitService
 from domain.portfolio.repositories.kline_repo import KlineRepository
 from infrastructure.sources.akshare_source import AKShareDataSource
-from common.trading_time import TradingTimeUtils
+from domain.common.trading_time import TradingTimeUtils
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch
 
-from common.trading_time import TradingTimeUtils
+from domain.common.trading_time import TradingTimeUtils
 from config.trading_calendar import get_holidays, get_makeup_workdays, is_holiday, is_makeup_workday
 
 
