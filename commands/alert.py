@@ -6,7 +6,7 @@ alert 命令 - 执行一次预警检查
 
 import json
 from domain.portfolio.repositories.database import get_db
-from mystocks.services import WatchlistService
+from domain.portfolio.services.watchlist_service import WatchlistService
 from domain.alerting import RealtimeAlertEngine, AlertConfig
 from infrastructure.unified_service import UnifiedStockQueryService
 

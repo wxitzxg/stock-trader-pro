@@ -17,7 +17,7 @@ import sys
 import argparse
 from datetime import datetime
 
-from mystocks import MyStocks
+from domain.portfolio.services import MyStocks
 from commands.update_prices import cmd_update_prices, setup_parser as setup_update_prices_parser
 
 

@@ -31,7 +31,7 @@ class AKShareDataSource(BaseDataSource):
     def kline_repo(self):
         """延迟初始化 KlineRepository"""
         if self._kline_repo is None and self.db:
-            from mystocks.storage.repositories.kline_repo import KlineRepository
+            from domain.portfolio.repositories.kline_repo import KlineRepository
             self._kline_repo = KlineRepository(self.db.get_session())
         return self._kline_repo
 
@@ -343,7 +343,7 @@ class AKShareDataSource(BaseDataSource):
         # 优先从数据库缓存搜索
         if self.db:
             try:
-                from mystocks.storage.repositories.stock_list_repo import StockListRepository
+                from domain.portfolio.repositories.stock_list_repo import StockListRepository
                 stock_list_repo = StockListRepository(self.db.get_session())
                 results = stock_list_repo.search(keyword, limit=20)
 
@@ -389,7 +389,7 @@ class AKShareDataSource(BaseDataSource):
         Returns:
             更新的股票数量
         """
-        from mystocks.storage.repositories.stock_list_repo import StockListRepository
+        from domain.portfolio.repositories.stock_list_repo import StockListRepository
 
         if not self.db:
             print("错误：数据库实例未初始化")

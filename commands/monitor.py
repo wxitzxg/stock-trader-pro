@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from mystocks import MyStocks
+from domain.portfolio.services import MyStocks
 from domain.portfolio.models.position import Position
 from domain.portfolio.models.watchlist import Watchlist
 from domain.alerting import RealtimeAlertEngine, AlertConfig

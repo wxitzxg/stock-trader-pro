@@ -29,7 +29,7 @@ from commands import (
     cmd_smart_monitor,
     cmd_update_stock_list,
 )
-from mystocks.storage.database import init_database
+from infrastructure.database import init_database
 
 
 def cmd_init_db(args):

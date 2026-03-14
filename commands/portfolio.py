@@ -5,7 +5,7 @@ portfolio 命令 - 持仓管理
 """
 
 import json
-from mystocks import MyStocks
+from domain.portfolio.services import MyStocks
 
 
 def format_positions_json(positions: list, concentration: dict) -> str:

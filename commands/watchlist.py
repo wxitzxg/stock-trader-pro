@@ -5,7 +5,7 @@ watchlist 命令 - 收藏管理
 """
 
 import json
-from mystocks import MyStocks
+from domain.portfolio.services import MyStocks
 
 
 def format_watchlist_json(stocks: list) -> str:

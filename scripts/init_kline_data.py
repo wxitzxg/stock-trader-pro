@@ -16,8 +16,8 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mystocks.storage.database import Database
-from mystocks.services.kline_init_service import KlineInitService
+from infrastructure.database import Database
+from domain.portfolio.services.kline_init_service import KlineInitService
 from infrastructure.sources.akshare_source import AKShareDataSource
 
 

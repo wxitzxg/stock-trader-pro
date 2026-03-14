@@ -9,6 +9,7 @@ from domain.portfolio.services.sentiment import SentimentAnalyzer
 from domain.portfolio.services.fund_flow import FundFlowAnalyzer
 from domain.portfolio.services.position_monitor import PositionMonitor
 from domain.portfolio.services.stop_loss import StopLoss
+from domain.portfolio.services.my_stocks import MyStocks
 
 __all__ = [
     'PortfolioService',
@@ -19,5 +20,6 @@ __all__ = [
     'FundFlowAnalyzer',
     'PositionMonitor',
     'StopLoss',
+    'MyStocks',
     'InitMode',
 ]

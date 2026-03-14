@@ -10,7 +10,7 @@ import logging
 import signal
 import sys
 
-from mystocks import MyStocks
+from domain.portfolio.services import MyStocks
 from domain.portfolio.services.price_update_service import PriceUpdateService
 from domain.alerting.scheduler.price_scheduler import PriceUpdateScheduler, create_scheduler
 from config.settings import MONITOR_CONFIG
