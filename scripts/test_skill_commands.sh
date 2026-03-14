@@ -145,6 +145,11 @@ test_database_dependency() {
     run_test "Init database (init-db)" "DB" \
         "$PYTHON" "main.py" "init-db"
 
+    # SKILL.md Section: 初始化持仓
+    run_test "Init position (single stock mode)" "DB" \
+        "$PYTHON" "main.py" "init-position" \
+        "--code" "000001" "--qty" "200" "--cost" "10.5" "--name" "平安银行"
+
     # SKILL.md Section: 持仓管理
     run_test "Account deposit" "DB" \
         "$PYTHON" "main.py" "account" "--deposit" "100000"
@@ -257,6 +262,10 @@ test_api_dependency() {
 
     run_test "Smart monitor (once)" "API" \
         "$PYTHON" "main.py" "smart-monitor" "--once"
+
+    # SKILL.md Section: 监控预警
+    run_test "Monitor with output file" "API" \
+        "$PYTHON" "main.py" "monitor" "--output" "/tmp/monitor_report.md"
 
     # Additional API tests - 补充测试
     run_test "Analyze with full options" "API" \
