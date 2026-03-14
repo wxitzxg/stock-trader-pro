@@ -182,6 +182,30 @@ test_database_dependency() {
 
     run_test "Params get" "DB" \
         "$PYTHON" "main.py" "params" "get" "--symbol" "600519"
+
+    # Additional DB tests - 持仓管理补充
+    run_test "Account withdraw" "DB" \
+        "$PYTHON" "main.py" "account" "--withdraw" "10000"
+
+    run_test "Mystocks sell position" "DB" \
+        "$PYTHON" "main.py" "mystocks" "sell" \
+        "--code" "600519" "--qty" "50" "--price" "1600"
+
+    run_test "Holdings with refresh" "DB" \
+        "$PYTHON" "main.py" "holdings" "--refresh"
+
+    # SKILL.md Section: 收藏管理 - 补充
+    run_test "Watchlist add with target/stop-loss" "DB" \
+        "$PYTHON" "main.py" "watchlist" "--add" "000858" \
+        "--name" "五粮液" "--target" "200" "--stop-loss" "150"
+
+    # SKILL.md Section: 参数管理 - 补充
+    run_test "Params set" "DB" \
+        "$PYTHON" "main.py" "params" "set" "--symbol" "600519" \
+        "--name" "贵州茅台" "--params" "vcp.min_drops=3"
+
+    run_test "Params remove" "DB" \
+        "$PYTHON" "main.py" "params" "remove" "--symbol" "600519"
 }
 
 # =============================================================================
@@ -233,6 +257,46 @@ test_api_dependency() {
 
     run_test "Smart monitor (once)" "API" \
         "$PYTHON" "main.py" "smart-monitor" "--once"
+
+    # Additional API tests - 补充测试
+    run_test "Analyze with full options" "API" \
+        "$PYTHON" "main.py" "analyze" "600519" "--full" "--json"
+
+    run_test "Analyze watchlist" "API" \
+        "$PYTHON" "main.py" "analyze" "--watchlist" "--json"
+
+    run_test "Query ETF" "API" \
+        "$PYTHON" "main.py" "query" "510300"
+
+    run_test "Search by code" "API" \
+        "$PYTHON" "main.py" "search" "600"
+
+    run_test "Sector region" "API" \
+        "$PYTHON" "main.py" "sector" "--region"
+
+    run_test "Sector limit" "API" \
+        "$PYTHON" "main.py" "sector" "--limit" "10"
+
+    run_test "Export JSON format" "API" \
+        "$PYTHON" "main.py" "export" "600519" "--format" "json" "--days" "5"
+
+    run_test "Export with output file" "API" \
+        "$PYTHON" "main.py" "export" "600519" "-o" "/tmp/test_export.csv" "--days" "5"
+
+    run_test "Monitor no-position" "API" \
+        "$PYTHON" "main.py" "monitor" "--no-position"
+
+    run_test "Monitor no-watchlist" "API" \
+        "$PYTHON" "main.py" "monitor" "--no-watchlist"
+
+    run_test "Update stock list full" "API" \
+        "$PYTHON" "main.py" "update-stock-list" "--full"
+
+    run_test "Update prices once" "API" \
+        "$PYTHON" "main.py" "update-prices" "--once"
+
+    run_test "Update kline once" "API" \
+        "$PYTHON" "main.py" "update-kline" "--once"
 }
 
 # =============================================================================
