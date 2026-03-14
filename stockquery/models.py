@@ -11,7 +11,7 @@ class QuoteData:
     """实时行情数据"""
     source: str = ""
     code: str = ""
-    symbol: str = ""  # 别名，兼容旧代码
+    symbol: str = ""
     name: str = ""
     price: float = 0.0
     change: float = 0.0  # 涨跌额

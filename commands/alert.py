@@ -5,7 +5,7 @@ alert 命令 - 执行一次预警检查
 """
 
 from mystocks.storage.database import get_db
-from mystocks.services import WatchlistManager
+from mystocks.services import WatchlistService
 from realalerts import RealtimeAlertEngine, AlertConfig
 from stockquery import UnifiedStockQueryService
 
@@ -16,8 +16,8 @@ def cmd_alert(args):
     db.init_db()
     session = db.get_session()
 
-    watchlist_mgr = WatchlistManager(session)
-    watchlist_stocks = watchlist_mgr.get_all()
+    watchlist_svc = WatchlistService(session)
+    watchlist_stocks = watchlist_svc.get_all()
 
     if not watchlist_stocks:
         print("收藏股列表为空")

@@ -36,17 +36,6 @@ def cmd_init(args):
             for p in positions:
                 print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.4f}")
 
-        elif args.broker_file:
-            # 从券商交割单导入
-            positions = ms.initialize_from_broker_statement(
-                args.broker_file,
-                broker=args.broker or "auto",
-                mode=args.mode
-            )
-            print(f"✅ 成功导入 {len(positions)} 只持仓")
-            for p in positions:
-                print(f"   📌 {p.stock_code} ({p.stock_name}): {p.quantity}股 @ ¥{p.avg_cost:.4f}")
-
         else:
             # 单只初始化（支持自动获取股票信息）
             position = ms.initialize_position(
@@ -324,8 +313,6 @@ def main():
     init_parser.add_argument('--price', type=float, help='当前价')
     init_parser.add_argument('--date', help='建仓日期（格式：YYYY-MM-DD）')
     init_parser.add_argument('--file', help='导入文件路径（JSON/CSV）')
-    init_parser.add_argument('--broker-file', help='券商交割单文件路径（CSV/XLSX）')
-    init_parser.add_argument('--broker', help='券商名称（默认 auto 自动检测）')
     init_parser.add_argument('--format', choices=['json', 'csv'], help='文件格式（默认根据扩展名判断）')
     init_parser.add_argument('--mode', choices=['overwrite', 'add'], default='overwrite',
                             help='导入模式：overwrite=覆盖原有持仓，add=累加到原有持仓')

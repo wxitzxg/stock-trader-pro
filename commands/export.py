@@ -3,7 +3,8 @@
 export 命令 - 导出历史 K 线数据
 """
 
-from mystocks.services import get_historical_kline, export_kline_data
+from stockquery import UnifiedStockQueryService
+import pandas as pd
 
 
 def cmd_export(args):
@@ -20,11 +21,16 @@ def cmd_export(args):
     print(f"导出 {args.code} 最近{days}天 K 线数据...\n")
 
     # 获取历史数据
-    df = get_historical_kline(args.code, days=days)
+    stock_query = UnifiedStockQueryService()
+    df = stock_query.get_historical_data(args.code, days=days)
 
     if df is None or df.empty:
         print("获取历史数据失败")
         return
 
     # 导出
-    export_kline_data(df, output, format=format_type)
+    if format_type == 'csv':
+        df.to_csv(output, index=False)
+    elif format_type == 'json':
+        df.to_json(output, orient='records', force_ascii=False)
+    print(f"已导出数据到：{output}")

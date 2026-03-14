@@ -15,6 +15,9 @@ from .search import cmd_search
 from .export import cmd_export
 from .params import cmd_params
 from .account import cmd_account, cmd_holdings
+from .update_prices import cmd_update_prices
+from .update_kline import cmd_update_kline
+from .smart_monitor import cmd_smart_monitor
 
 __all__ = [
     'analyze_stock',
@@ -32,4 +35,7 @@ __all__ = [
     'cmd_params',
     'cmd_account',
     'cmd_holdings',
+    'cmd_update_prices',
+    'cmd_update_kline',
+    'cmd_smart_monitor',
 ]

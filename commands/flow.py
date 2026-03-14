@@ -3,7 +3,7 @@
 flow 命令 - 查看资金流向分析
 """
 
-from mystocks.services import get_fund_flow
+from stockquery import UnifiedStockQueryService
 
 
 def cmd_flow(args):
@@ -15,7 +15,8 @@ def cmd_flow(args):
 
     print(f"分析 {args.code} 资金流向...\n")
 
-    flow_data = get_fund_flow(args.code)
+    stock_query = UnifiedStockQueryService()
+    flow_data = stock_query.get_fund_flow(args.code)
 
     if 'error' in flow_data:
         print(f"获取失败：{flow_data['error']}")

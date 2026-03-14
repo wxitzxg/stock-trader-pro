@@ -3,7 +3,37 @@
 query 命令 - 查询股票实时行情
 """
 
-from mystocks.services import get_stock_quote, format_stock_info
+from stockquery import UnifiedStockQueryService
+
+
+def format_stock_info(quote: dict) -> str:
+    """格式化股票信息"""
+    if not quote or 'error' in quote:
+        return "数据获取失败"
+
+    name = quote.get('name', 'Unknown')
+    code = quote.get('symbol', quote.get('code', 'N/A'))
+    price = quote.get('price', 0)
+    change_pct = quote.get('change_pct', 0)
+
+    # 中国习惯：红涨绿跌
+    if change_pct > 0:
+        color = "🔴"
+        sign = "+"
+    elif change_pct < 0:
+        color = "🟢"
+        sign = ""
+    else:
+        color = "⚪"
+        sign = ""
+
+    return f"{color} {name} ({code})\n" \
+           f"  当前价：¥{price:.2f} ({sign}{change_pct:.2f}%)\n" \
+           f"  今开：¥{quote.get('open', 'N/A')}\n" \
+           f"  最高：¥{quote.get('high', 'N/A')}\n" \
+           f"  最低：¥{quote.get('low', 'N/A')}\n" \
+           f"  昨收：¥{quote.get('prev_close', 'N/A')}\n" \
+           f"  成交量：{quote.get('volume', 0):,}"
 
 
 def cmd_query(args):
@@ -15,7 +45,8 @@ def cmd_query(args):
 
     print(f"查询 {len(args.codes)} 只股票实时行情...\n")
 
+    stock_query = UnifiedStockQueryService()
     for code in args.codes:
-        quote = get_stock_quote(code)
+        quote = stock_query.get_quote(code)
         print(format_stock_info(quote))
         print()

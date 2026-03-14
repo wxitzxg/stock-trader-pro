@@ -356,31 +356,6 @@ class MyStocks:
 
         return self._portfolio_service.initialize_positions_batch(positions_data, init_mode)
 
-    def initialize_from_broker_statement(
-        self,
-        file_path: str,
-        broker: str = "auto",
-        mode: str = "overwrite"
-    ) -> List[Position]:
-        """
-        从券商交割单导入持仓
-
-        Args:
-            file_path: 文件路径（支持 CSV/XLSX）
-            broker: 券商名称（auto=自动检测）
-            mode: 模式（overwrite=覆盖，add=累加）
-
-        Returns:
-            List[Position]: 创建的持仓列表
-        """
-        # 导入解析器
-        from mystocks.utils.position_import import parse_broker_statement
-
-        positions_data = parse_broker_statement(file_path, broker)
-        init_mode = InitMode.OVERWRITE if mode == "overwrite" else InitMode.ADD
-
-        return self._portfolio_service.initialize_positions_batch(positions_data, init_mode)
-
     def sync_prices(self, price_fetcher):
         """
         同步最新股价
@@ -457,8 +432,6 @@ class MyStocks:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-
-# ========== 导出模型（向后兼容）==========
 
 __all__ = [
     'MyStocks',

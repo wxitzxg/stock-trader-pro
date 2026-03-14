@@ -24,6 +24,9 @@ from commands import (
     cmd_params,
     cmd_account,
     cmd_holdings,
+    cmd_update_prices,
+    cmd_update_kline,
+    cmd_smart_monitor,
 )
 from mystocks.storage.database import init_database
 
@@ -57,88 +60,12 @@ def cmd_init_position(args):
         cmd.extend(["--date", args.date])
     if args.file:
         cmd.extend(["--file", args.file])
-    if args.broker_file:
-        cmd.extend(["--broker-file", args.broker_file])
-    if args.broker:
-        cmd.extend(["--broker", args.broker])
     if args.format:
         cmd.extend(["--format", args.format])
     if args.mode:
         cmd.extend(["--mode", args.mode])
 
     subprocess.run(cmd)
-
-
-def cmd_daemon(args):
-    """daemon 命令处理 - 启动后台监控进程"""
-    from pathlib import Path
-    from apscheduler.schedulers.blocking import BlockingScheduler
-    from apscheduler.triggers.interval import IntervalTrigger
-    from realalerts import SmartScheduler
-    from commands.monitor import cmd_monitor
-    from argparse import Namespace
-
-    # 监控间隔（秒）
-    interval = getattr(args, 'interval', 300)  # 默认 5 分钟
-    output_dir = getattr(args, 'output_dir', None)
-
-    print("🚀 启动后台监控进程...")
-    print(f"📊 监控策略：仅交易日交易时段预警")
-    print(f"📁 报告输出目录：{output_dir or '控制台'}")
-    print("按 Ctrl+C 停止监控")
-    print()
-
-    run_count = [0]  # 使用列表以便在嵌套函数中修改
-
-    def run_monitor():
-        """监控任务执行函数"""
-        result = SmartScheduler.should_run_now()
-
-        if not result.get("run"):
-            reason = result.get("reason", "未知原因")
-            print(f"⏸️  跳过监控：{reason}")
-            return
-
-        run_count[0] += 1
-        mode = result.get('mode', 'default')
-        print(f"\n{'='*60}")
-        print(f"🕐 执行监控 #{run_count[0]} (模式：{mode})")
-        print(f"{'='*60}\n")
-
-        # 构建 monitor 命令参数
-        monitor_args = Namespace()
-        monitor_args.output = None
-        monitor_args.no_position = False
-        monitor_args.no_watchlist = False
-
-        # 如果指定了输出目录，生成报告文件
-        if output_dir:
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-            import time
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            monitor_args.output = str(output_path / f"monitor_{timestamp}.md")
-
-        # 执行监控
-        try:
-            cmd_monitor(monitor_args)
-        except Exception as e:
-            print(f"⚠️ 监控执行失败：{e}")
-
-    scheduler = BlockingScheduler()
-    scheduler.add_job(
-        run_monitor,
-        trigger=IntervalTrigger(seconds=interval),
-        id='market_monitor',
-        name='市场监控',
-        max_instances=1
-    )
-
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown(wait=False)
-        print(f"\n👋 监控已停止（共执行 {run_count[0]} 次）")
 
 
 def cmd_mystocks(args):
@@ -302,8 +229,6 @@ Examples:
     init_position_parser.add_argument('--price', type=float, help='当前价')
     init_position_parser.add_argument('--date', help='建仓日期（格式：YYYY-MM-DD）')
     init_position_parser.add_argument('--file', help='导入文件路径（JSON/CSV）')
-    init_position_parser.add_argument('--broker-file', help='券商交割单文件路径（CSV/XLSX）')
-    init_position_parser.add_argument('--broker', help='券商名称（默认 auto 自动检测）')
     init_position_parser.add_argument('--format', choices=['json', 'csv'], help='文件格式')
     init_position_parser.add_argument('--mode', choices=['overwrite', 'add'], default='overwrite',
                                      help='导入模式：overwrite=覆盖，add=累加')
@@ -315,12 +240,6 @@ Examples:
     alert_parser = subparsers.add_parser('alert', help='执行一次智能预警检查')
     alert_parser.set_defaults(func=cmd_alert)
 
-    # daemon 命令 - 后台常驻监控
-    daemon_parser = subparsers.add_parser('daemon', help='启动后台监控进程 (7x24 小时)')
-    daemon_parser.add_argument('--interval', type=int, default=300, help='监控间隔（秒，默认 300）')
-    daemon_parser.add_argument('--output-dir', help='报告输出目录')
-    daemon_parser.set_defaults(func=cmd_daemon)
-
     # params 命令 - 管理股票策略参数
     params_parser = subparsers.add_parser('params', help='管理股票策略参数')
     params_parser.add_argument('action', choices=['list', 'get', 'set', 'remove', 'defaults'],
@@ -330,6 +249,28 @@ Examples:
     params_parser.add_argument('--params', help='参数配置 (逗号分隔，如 vcp.min_drops=3,zigzag.threshold=0.08)')
     params_parser.add_argument('--notes', help='备注说明')
     params_parser.set_defaults(func=cmd_params)
+
+    # ========== 调度命令 ==========
+
+    # update-prices 命令 - 持仓价格定时更新
+    update_prices_parser = subparsers.add_parser('update-prices', help='持仓价格定时更新')
+    update_prices_parser.add_argument('--once', action='store_true', help='只执行一次更新')
+    update_prices_parser.add_argument('--interval', type=int, default=None, help='更新间隔（秒）')
+    update_prices_parser.add_argument('--stock-code', type=str, help='只更新指定股票（--once 模式）')
+    update_prices_parser.set_defaults(func=cmd_update_prices)
+
+    # update-kline 命令 - K 线数据定时更新
+    update_kline_parser = subparsers.add_parser('update-kline', help='K 线数据定时更新（每日 01:00）')
+    update_kline_parser.add_argument('--once', action='store_true', help='只执行一次更新')
+    update_kline_parser.add_argument('--stock-code', type=str, help='只更新指定股票（--once 模式）')
+    update_kline_parser.set_defaults(func=cmd_update_kline)
+
+    # smart-monitor 命令 - 智能监控预警调度
+    smart_monitor_parser = subparsers.add_parser('smart-monitor', help='智能监控预警（交易时间运行）')
+    smart_monitor_parser.add_argument('--once', action='store_true', help='只执行一次监控')
+    smart_monitor_parser.add_argument('--interval', type=int, default=None, help='监控间隔（秒）')
+    smart_monitor_parser.add_argument('--output-dir', type=str, help='报告输出目录')
+    smart_monitor_parser.set_defaults(func=cmd_smart_monitor)
 
     args = parser.parse_args()
 

@@ -118,7 +118,7 @@ class KlineScheduler:
         except Exception as e:
             logger.error(f"每日 K 线更新任务执行失败：{e}")
 
-    def _update_single_symbol(
+    def update_single_symbol(
         self,
         symbol: str,
         date: str,

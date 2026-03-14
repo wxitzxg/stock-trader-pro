@@ -274,20 +274,6 @@ TRADING_FEES = {
 
 ---
 
-## 向后兼容性
-
-旧的 `portfolio` 模块已标记为废弃，但仍可正常使用：
-
-```python
-# 旧代码仍可运行，但会收到 DeprecationWarning
-from portfolio import PortfolioManager, WatchlistManager
-
-# 推荐使用新模块
-from mystocks import MyStocks
-```
-
----
-
 ## 示例输出
 
 ### 持仓列表

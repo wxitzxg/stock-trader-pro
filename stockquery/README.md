@@ -70,17 +70,6 @@ service = get_default_service()
 quote = service.get_quote("600519")
 ```
 
-### 使用 services 层（兼容旧代码）
-
-```python
-from services import get_stock_quote, get_sector_rank, format_stock_info
-
-quote = get_stock_quote("600519")
-print(format_stock_info(quote))
-
-sector = get_sector_rank(sector_type=1)
-```
-
 ## 数据模型
 
 ```python

@@ -3,7 +3,7 @@
 search 命令 - 搜索股票
 """
 
-from mystocks.services import search_stock
+from stockquery import UnifiedStockQueryService
 
 
 def cmd_search(args):
@@ -15,7 +15,8 @@ def cmd_search(args):
 
     print(f"搜索股票：{args.keyword}...\n")
 
-    results = search_stock(args.keyword)
+    stock_query = UnifiedStockQueryService()
+    results = stock_query.search_stock(args.keyword)
 
     if not results:
         print("未找到匹配的股票")

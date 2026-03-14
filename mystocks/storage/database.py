@@ -43,12 +43,11 @@ class Database:
         self.engine.dispose()
 
 
-# Singleton instance for compatibility
 _db_instance = None
 
 
 def get_db():
-    """获取数据库实例（兼容旧版 API）"""
+    """获取数据库实例"""
     global _db_instance
     if _db_instance is None:
         _db_instance = Database()
@@ -57,7 +56,7 @@ def get_db():
 
 
 def init_database():
-    """初始化数据库（兼容旧版 API）"""
+    """初始化数据库"""
     db = Database()
     db.init_db()
     return db
