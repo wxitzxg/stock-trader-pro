@@ -22,7 +22,7 @@ def cmd_search(args):
 
     try:
         repo = StockListRepository(session)
-        results = repo.search_by_keyword(args.keyword)
+        results = repo.search(args.keyword)
 
         if not results:
             if getattr(args, 'json', False):
@@ -40,8 +40,8 @@ def cmd_search(args):
             }
             for r in results:
                 output["results"].append({
-                    "code": r.stock_code,
-                    "name": r.stock_name,
+                    "code": r.code,
+                    "name": r.name,
                     "price": float(r.latest_price or 0),
                     "change_pct": float(r.change_pct or 0)
                 })
@@ -53,6 +53,6 @@ def cmd_search(args):
             print("-" * 50)
 
             for r in results:
-                print(f"{r.stock_code:<10} {r.stock_name:<15} {float(r.latest_price or 0):>10.2f} {float(r.change_pct or 0):>10.2f}%")
+                print(f"{r.code:<10} {r.name:<15} {float(r.latest_price or 0):>10.2f} {float(r.change_pct or 0):>10.2f}%")
     finally:
         session.close()

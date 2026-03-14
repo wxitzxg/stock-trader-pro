@@ -150,8 +150,8 @@ test_database_dependency() {
         "$PYTHON" "main.py" "account" "--deposit" "100000"
 
     run_test "Mystocks buy position" "DB" \
-        "$PYTHON" "main.py" "mystocks" "buy" "600519" \
-        "--qty" "100" "--price" "1500" "--name" "贵州茅台"
+        "$PYTHON" "main.py" "mystocks" "buy" \
+        "--code" "600519" "--qty" "100" "--price" "1500" "--name" "贵州茅台"
 
     run_test "Mystocks view positions (pos)" "DB" \
         "$PYTHON" "main.py" "mystocks" "pos"
