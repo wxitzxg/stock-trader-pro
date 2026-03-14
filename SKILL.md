@@ -1,6 +1,6 @@
 # Stock Trader Pro - 专业 A 股波段交易系统
 
-> **版本**: v2.6
+> **版本**: v2.7
 > **作者**: Stock Trader Pro Team
 > **许可**: MIT
 > **Python**: 3.9+
@@ -63,7 +63,7 @@ python3 main.py init-db
 ```
 
 **数据库文件位置：**
-- 默认位置：`data/stock_trader.db`
+- 默认位置：`storage/investment.db`
 - 可通过修改 `config/settings.py` 中的 `DATABASE_PATH` 自定义路径
 
 **数据库表结构：**
@@ -74,10 +74,9 @@ python3 main.py init-db
 | `position_lots` | 持仓批次表（FIFO 成本核算） |
 | `transactions` | 交易记录表 |
 | `watchlist` | 收藏股表 |
-| `account_transactions` | 账户资金变动表 |
-| `stock_params` | 股票策略参数表 |
-| `alert_history` | 预警历史记录表 |
 | `kline_cache` | K 线数据缓存表 |
+| `stock_list` | A 股股票列表缓存 |
+| `stock_params` | 股票策略参数表 |
 
 **注意事项：**
 - 初始化数据库会创建所有必需的表结构
@@ -137,6 +136,27 @@ python3 main.py smart-monitor
 | **收藏管理** | 标签分类 | 目标价/止损价设置 + 批量监控 |
 | **板块分析** | 涨幅排行 | 行业/概念/地域板块数据 |
 | **数据导出** | CSV/JSON | 历史 K 线数据导出 |
+
+### 项目架构
+
+```
+stock-trader-pro/
+├── controllers/     # 命令处理层（View/Controller）
+├── services/        # 业务服务层（Service）
+├── repositories/    # 数据访问层 + 外部数据源（Repository）
+├── models/          # 数据模型层（Model）
+├── domain/          # 纯业务规则（预警引擎、分析策略）
+├── config/          # 配置文件
+├── scripts/         # 工具脚本
+└── main.py          # 主入口
+```
+
+**架构说明：**
+- **controllers/**: 命令行请求处理，参数解析，结果输出
+- **services/**: 业务逻辑服务，Facade 模式整合
+- **repositories/**: 数据访问抽象，整合 AKShare/新浪财经/东方财富数据源
+- **models/**: SQLAlchemy ORM 数据模型
+- **domain/**: 纯业务规则（alerting 预警引擎、analysis 分析策略）
 
 ---
 
@@ -1110,6 +1130,13 @@ TRADING_FEES = {
 
 完整的版本历史记录请参阅 [CHANGELOG.md](CHANGELOG.md)。
 
+### v2.7 (MVC Architecture Refactor) - 2026-03-14
+- ✅ 完成 MVC 架构重构 - controllers/services/repositories/models/domain 五层分离
+- ✅ 整合数据源到 Repository 层（AKShare/新浪财经/东方财富）
+- ✅ 删除废弃的 domain/portfolio/{models,services,repositories}/ 目录
+- ✅ 删除废弃的 infrastructure/ 目录
+- ✅ 统一导入路径，提升代码可维护性
+
 ### v2.6 (Documentation Update) - 2026-03-14
 - ✅ 删除券商交割单支持功能
 - ✅ 优化文档结构，添加安装说明
@@ -1120,4 +1147,4 @@ TRADING_FEES = {
 
 ---
 
-*最后更新：2026-03-14*
+*最后更新：2026-03-14 (v2.7)*
